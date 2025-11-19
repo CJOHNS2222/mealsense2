@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Pantry Chef</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .container {
+            max-width: 480px;
+            margin: auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+        .tab-button {
+            padding: 0.75rem 1rem;
+            flex-grow: 1;
+            text-align: center;
+            border-radius: 0.5rem 0.5rem 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .tab-active {
+            background-color: #ffffff;
+            color: #10B981; /* Emerald 500 */
+            border-bottom: 3px solid #10B981;
+        }
+        .tab-inactive {
+            background-color: #e5e7eb; /* Gray 200 */
+            color: #6B7280; /* Gray 500 */
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #10B981;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for recipe box */
+        #recipe-output, #selected-recipe-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background-color: #f9f9f9;
+            border: 1px solid #e5eeeb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        /* Style for the camera view */
+        #video-feed {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            background-color: #000;
+            border-radius: 0.75rem;
+        }
+    </style>
+</head>
+<body class="p-4">
+<div class="container bg-white">
+    <header class="text-center py-4 mb-4">
+        <h1 class="text-3xl font-bold text-gray-800">Smart Pantry Chef</h1>
+        <p class="text-sm text-gray-500 mt-1" id="user-info">Initializing...</p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="flex mb-4 sticky top-0 bg-white z-10 rounded-t-lg shadow-md">
+        <button class="tab-button" data-tab="scanner">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3h-2a.5.5 0 00-.354.146L7.293 4.707A1 1 0 016.586 5H4zm6 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+            </svg>
+            Scan
+        </button>
+        <button class="tab-button" data-tab="inventory">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" />
+            </svg>
+            Inventory
+        </button>
+        <button class="tab-button" data-tab="recipes">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" />
+            </svg>
+            Recipes
+        </button>
+        <button class="tab-button" data-tab="saved">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+            </svg>
+            Saved
+        </button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main class="flex-grow">
+        <!-- Scanner Tab -->
+        <div id="scanner" class="tab-content hidden">
+            <div class="card space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Pantry/Fridge Scanner</h2>
+                <p class="text-sm text-gray-500">
+                    Use your camera to scan the contents of your storage.
+                    <span class="font-bold text-red-500 block mt-1">Note: Actual object recognition is simulated.</span>
+                </p>
+
+                <!-- Camera Feed -->
+                <div class="relative w-full aspect-video bg-gray-200 rounded-xl overflow-hidden shadow-inner">
+                    <video id="video-feed" autoplay playsinline></video>
+                    <div id="camera-placeholder" class="absolute inset-0 flex items-center justify-center bg-gray-900 text-white font-mono rounded-xl text-center p-4">
+                        Camera Feed. Press "Start Scan" to activate.
+                    </div>
+                </div>
+
+                <div class="flex justify-between gap-2">
+                    <button id="start-scan-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-indigo-200" onclick="startScan()">
+                        Start Scan
+                    </button>
+                    <button id="capture-scan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-green-200" disabled style="display: none;" onclick="captureScan()">
+                        Capture Inventory
+                    </button>
+                </div>
+
+                <!-- Mock Detection Result -->
+                <div id="mock-detection-result" class="hidden mt-4 p-4 border-l-4 border-yellow-400 bg-yellow-50 rounded-lg">
+                    <p class="font-semibold text-yellow-800">Mock Detection Results (Edit/Confirm)</p>
+                    <div id="mock-items-list" class="mt-2 space-y-2">
+                        <!-- Mock items will be injected here -->
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl transition" onclick="cancelScan()">Cancel</button>
+                        <button id="save-inventory-btn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-teal-200" onclick="saveMockInventory()">Confirm & Save</button>
+                    </div>
+                </div>
+
+                <p id="scan-error" class="text-red-500 text-sm hidden mt-2"></p>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div id="inventory" class="tab-content hidden">
+            <div class="card space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700 flex justify-between items-center">
+                    Current Pantry
+                    <span id="item-count" class="text-sm font-normal text-gray-500"></span>
+                </h2>
+
+                <div id="inventory-list" class="space-y-3">
+                    <p class="text-gray-500" id="inventory-placeholder">Your pantry is empty. Scan some items!</p>
+                    <!-- Items rendered here -->
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 mt-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Add Item Manually</h3>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="manual-item-input" placeholder="e.g., Cheddar Cheese (500g)" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex gap-2 items-end">
+                        <!-- Expiry Date Input -->
+                        <div class="flex-grow">
+                            <label for="manual-expiry-input" class="block text-xs font-medium text-gray-500 mb-1">Expiration Date (Optional)</label>
+                            <input type="date" id="manual-expiry-input" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button id="add-item-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition h-10" onclick="addManualItem()">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipes Tab -->
+        <div id="recipes" class="tab-content hidden">
+            <div class="card space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700">Meal Planner</h2>
+                <p class="text-sm text-gray-500">Generate recipes using your current inventory list.</p>
+
+                <!-- Recipe Constraints -->
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Servings Input -->
+                    <div>
+                        <label for="servings-input" class="block text-sm font-medium text-gray-700 mb-1">Servings Required</label>
+                        <input type="number" id="servings-input" value="2" min="1" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- Dietary Input -->
+                    <div>
+                        <label for="dietary-input" class="block text-sm font-medium text-gray-700 mb-1">Dietary Filter (Optional)</label>
+                        <input type="text" id="dietary-input" placeholder="e.g., Vegetarian, Vegan" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- Time Input -->
+                    <div class="col-span-2">
+                        <label for="time-input" class="block text-sm font-medium text-gray-700 mb-1">Max Cook/Prep Time (Optional, mins)</label>
+                        <input type="number" id="time-input" placeholder="e.g., 30" min="5" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Unit Selector -->
+                <div class="flex rounded-xl border border-gray-300 overflow-hidden shadow-inner mt-2">
+                    <button id="unit-metric-btn" class="unit-toggle-btn w-1/2 py-2 text-sm font-semibold transition bg-indigo-500 text-white" data-unit="metric" onclick="window.toggleUnits('metric')">
+                        Metric (g, ml, °C)
+                    </button>
+                    <button id="unit-standard-btn" class="unit-toggle-btn w-1/2 py-2 text-sm font-semibold transition bg-white text-gray-600 hover:bg-gray-50" data-unit="standard" onclick="window.toggleUnits('standard')">
+                        Standard (oz, tsp, °F)
+                    </button>
+                </div>
+
+                <button id="generate-recipe-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-pink-200" onclick="generateRecipes()">
+                    Generate Recipes
+                </button>
+
+                <div id="recipe-generation-status" class="text-center py-4 hidden">
+                    <div class="spinner"></div>
+                    <p class="text-sm text-gray-600 mt-2">Consulting the Smart Chef...</p>
+                </div>
+
+                <!-- Recipe Output Container -->
+                <div id="recipe-output-container" class="mt-4 hidden">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2 flex justify-between items-center">
+                        Generated Recipes:
+                        <button id="save-recipe-btn" class="bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold py-1 px-3 rounded-full transition shadow-lg shadow-teal-200 hidden" onclick="saveGeneratedRecipe()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                            </svg>
+                            Save
+                        </button>
+                    </h3>
+                    <pre id="recipe-output" class="text-sm text-gray-800"></pre>
+                    <div id="recipe-sources" class="text-xs text-gray-500 mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Recipes Tab -->
+        <div id="saved" class="tab-content hidden">
+            <div class="card space-y-4">
+                <h2 class="text-xl font-semibold text-gray-700 flex justify-between items-center">
+                    Saved Recipes
+                    <span id="saved-recipe-count" class="text-sm font-normal text-gray-500">(0 recipes)</span>
+                </h2>
+
+                <div id="saved-recipes-list" class="space-y-3">
+                    <p class="text-gray-500" id="saved-recipes-placeholder">You haven't saved any recipes yet. Generate one in the Recipes tab!</p>
+                    <!-- Saved recipe titles rendered here -->
+                </div>
+
+                <div id="selected-recipe-view" class="mt-6 pt-4 border-t border-gray-100 hidden">
+                    <h3 id="selected-recipe-title" class="text-xl font-bold text-teal-600 mb-2"></h3>
+                    <pre id="selected-recipe-content" class="text-sm text-gray-800 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap"></pre>
+                    <div class="flex justify-end mt-3">
+                        <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-red-200 text-sm" onclick="deleteSavedRecipe(window.selectedRecipeId)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
+                            </svg>
+                            Delete Recipe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center text-xs text-gray-400 py-4 mt-auto border-t border-gray-100">
+        Powered by Gemini API & Firestore
+    </footer>
+
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global variables provided by the environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let app;
+    let db;
+    let auth;
+    window.currentUserId = null;
+    window.inventory = []; // Array of { name: string, expiry: string | null }
+    window.savedRecipes = []; // Array of { id: string, title: string, content: string }
+    window.latestRecipeContent = null; // Store for saving the last generated recipe
+    window.selectedRecipeId = null;
+    window.units = 'metric'; // Default unit system
+
+    // --- CORE FIREBASE INITIALIZATION AND AUTH ---
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        // 1. Authentication Setup
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.currentUserId = user.uid;
+                // Removed Tier status display as it's a personal, full-featured app now.
+                document.getElementById('user-info').textContent = `User ID: ${user.uid.substring(0, 8)}...`;
+                console.log("Authenticated user:", user.uid);
+                setupInventoryListener();
+                setupSavedRecipeListener();
+            } else {
+                console.log("No user, signing in.");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase Sign-In Error:", error);
+                    document.getElementById('user-info').textContent = 'Error during sign-in.';
+                }
+            }
+        });
+
+        // 2. Data Listener Setup for Inventory
+        function setupInventoryListener() {
+            if (!window.currentUserId) return;
+
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(db, docPath, "inventory_list");
+
+            onSnapshot(inventoryDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Ensure data is an array of objects
+                    window.inventory = Array.isArray(data.items) ? data.items : [];
+                    console.log("Inventory updated from Firestore:", window.inventory.length, 'items');
+                } else {
+                    window.inventory = [];
+                    console.log("No inventory document found. Starting fresh.");
+                }
+                renderInventory();
+            }, (error) => {
+                console.error("Firestore Error on Snapshot:", error);
+            });
+        }
+
+        // 3. Data Listener Setup for Saved Recipes
+        function setupSavedRecipeListener() {
+            if (!window.currentUserId) return;
+
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const savedRecipesCollectionRef = collection(db, collectionPath);
+            const savedRecipesQuery = query(savedRecipesCollectionRef);
+
+            onSnapshot(savedRecipesQuery, (querySnapshot) => {
+                window.savedRecipes = [];
+                querySnapshot.forEach((doc) => {
+                    window.savedRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                console.log("Saved recipes updated from Firestore:", window.savedRecipes.length, 'recipes');
+                if (activeTab === 'saved') {
+                    window.renderSavedRecipes();
+                }
+            }, (error) => {
+                console.error("Firestore Error on Saved Recipes Snapshot:", error);
+            });
+        }
+
+
+        // Global function to save inventory (now expects array of objects)
+        window.saveInventoryToDb = async (newInventory) => {
+            if (!window.currentUserId) {
+                console.error("User not authenticated yet.");
+                return;
+            }
+
+            // Removed the inventory limit check for personal use.
+
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(db, docPath, "inventory_list");
+
+            try {
+                await setDoc(inventoryDocRef, { items: newInventory });
+                console.log("Inventory saved successfully.");
+            } catch (e) {
+                console.error("Error saving document: ", e);
+            }
+        };
+
+        // Global function to delete a saved recipe
+        window.deleteSavedRecipe = async (recipeId) => {
+            if (!window.currentUserId || !recipeId) return;
+
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipeDocRef = doc(db, collectionPath, recipeId);
+
+            try {
+                await deleteDoc(recipeDocRef);
+                console.log("Recipe deleted successfully:", recipeId);
+                window.selectedRecipeId = null; // Clear view after deletion
+                window.renderSavedRecipes();
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+            }
+        };
+
+    } catch (e) {
+        console.error("Fatal Firebase Initialization Error:", e);
+        document.getElementById('user-info').textContent = 'Error: Cannot connect to services.';
+    }
+
+</script>
+
+<script>
+    // --- HELPER FUNCTIONS FOR EXPIRY DATE ---
+    function getDateDifferenceInDays(dateString) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expiryDate = new Date(dateString);
+        expiryDate.setHours(0, 0, 0, 0);
+
+        const diffTime = expiryDate.getTime() - today.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function isWithinDays(dateString, days) {
+        const diff = getDateDifferenceInDays(dateString);
+        return diff > 0 && diff <= days;
+    }
+
+    function isExpiredToday(dateString) {
+        return getDateDifferenceInDays(dateString) <= 0;
+    }
+
+    // --- VIEW MANAGEMENT ---
+    let activeTab = 'scanner';
+
+    const switchTab = (tabName) => {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-button').forEach(el => {
+            el.classList.remove('tab-active');
+            el.classList.add('tab-inactive');
+        });
+
+        document.getElementById(tabName).classList.remove('hidden');
+        document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('tab-active');
+        document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.remove('tab-inactive');
+        activeTab = tabName;
+
+        if (tabName === 'inventory') {
+            window.renderInventory();
+        } else if (tabName === 'saved') {
+            window.renderSavedRecipes();
+        }
+    };
+
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
+    });
+
+    // Define toggleUnits globally
+    window.toggleUnits = (unit) => {
+        window.units = unit;
+        const metricBtn = document.getElementById('unit-metric-btn');
+        const standardBtn = document.getElementById('unit-standard-btn');
+
+        if (unit === 'metric') {
+            metricBtn.classList.add('bg-indigo-500', 'text-white');
+            metricBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            standardBtn.classList.remove('bg-indigo-500', 'text-white');
+            standardBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+        } else {
+            standardBtn.classList.add('bg-indigo-500', 'text-white');
+            standardBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            metricBtn.classList.remove('bg-indigo-500', 'text-white');
+            metricBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+        }
+    };
+
+    // Initialize to the first tab
+    document.addEventListener('DOMContentLoaded', () => {
+        switchTab(activeTab);
+        // Ensure initial unit state is reflected on load
+        window.toggleUnits(window.units || 'metric');
+    });
+
+    // Helper function to check if the app is running inside a Capacitor native wrapper
+    function isCapacitorApp() {
+        return window.Capacitor && window.Capacitor.isNative;
+    }
+
+    // --- INVENTORY LOGIC (Updated to handle objects and expiry) ---
+
+    // Global function to render inventory
+    window.renderInventory = () => {
+        const listEl = document.getElementById('inventory-list');
+        const countEl = document.getElementById('item-count');
+        const placeholder = document.getElementById('inventory-placeholder');
+
+        if (!listEl || !countEl || !placeholder) { return; }
+
+        // Sort inventory: Expired first, then expiring soon, then by name
+        const sortedInventory = [...window.inventory].sort((a, b) => {
+            const aDays = a.expiry ? getDateDifferenceInDays(a.expiry) : Infinity;
+            const bDays = b.expiry ? getDateDifferenceInDays(b.expiry) : Infinity;
+
+            if (aDays !== bDays) {
+                return aDays - bDays;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        listEl.innerHTML = '';
+        countEl.textContent = `(${window.inventory.length} items)`;
+        placeholder.classList.toggle('hidden', window.inventory.length > 0);
+
+        sortedInventory.forEach((itemObj, index) => {
+            const isExpiringSoon = itemObj.expiry && isWithinDays(itemObj.expiry, 3);
+            const isExpired = itemObj.expiry && isExpiredToday(itemObj.expiry);
+
+            let colorClass = 'bg-gray-50 border-gray-100';
+            let warningIcon = '';
+
+            if (isExpired) {
+                colorClass = 'bg-red-100 border-red-300';
+                warningIcon = `<span class="text-red-600 font-bold mr-2">! EXPIRED</span>`;
+            } else if (isExpiringSoon) {
+                colorClass = 'bg-yellow-100 border-yellow-300';
+                warningIcon = `<span class="text-yellow-600 font-bold mr-2">⚠︎ Soon (${getDateDifferenceInDays(itemObj.expiry)}d)</span>`;
+            }
+
+            // Find original index to remove correctly
+            const originalIndex = window.inventory.findIndex(item => item === itemObj);
+
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `flex justify-between items-center p-3 rounded-lg border ${colorClass}`;
+            itemEl.innerHTML = `
+                <span class="text-gray-700 text-sm flex items-center">
+                    ${warningIcon}
+                    ${itemObj.name}
+                    ${itemObj.expiry && !isExpired ? `<span class="ml-2 text-xs text-gray-500"> (Exp: ${itemObj.expiry})</span>` : ''}
+                </span>
+                <button class="text-red-500 hover:text-red-700 text-sm font-semibold p-1" onclick="removeItem(${window.inventory.indexOf(itemObj)})">
+                    &times; Remove
+                </button>
+            `;
+            listEl.appendChild(itemEl);
+        });
+    };
+
+    // Global function to remove an item
+    window.removeItem = (index) => {
+        const newInventory = [...window.inventory];
+        newInventory.splice(index, 1);
+        window.saveInventoryToDb(newInventory);
+    };
+
+    // Global function to add an item manually
+    window.addManualItem = () => {
+        const inputEl = document.getElementById('manual-item-input');
+        const expiryEl = document.getElementById('manual-expiry-input');
+        const name = inputEl.value.trim();
+        const expiry = expiryEl.value || null; // Use null if empty
+
+        if (name) {
+            const newItem = { name: name, expiry: expiry };
+            const newInventory = [...window.inventory, newItem];
+            window.saveInventoryToDb(newInventory);
+            inputEl.value = '';
+            expiryEl.value = ''; // Clear date input too
+        }
+    };
+
+    // --- SCANNER LOGIC --- (Simplified captureScan/saveMockInventory for object structure)
+    let videoStream = null;
+    const videoEl = document.getElementById('video-feed');
+    const placeholderEl = document.getElementById('camera-placeholder');
+    const startBtn = document.getElementById('start-scan-btn');
+    const captureBtn = document.getElementById('capture-scan-btn');
+    const scanError = document.getElementById('scan-error');
+    const mockDetectionResultEl = document.getElementById('mock-detection-result');
+    const mockItemsListEl = document.getElementById('mock-items-list');
+
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+            videoEl.srcObject = null;
+        }
+        placeholderEl.classList.remove('hidden');
+        videoEl.classList.add('hidden');
+        startBtn.classList.remove('hidden');
+        captureBtn.style.display = 'none';
+    }
+
+    async function startScan() {
+        // Stop any existing stream and hide previous mock results
+        stopCamera();
+        scanError.classList.add('hidden');
+        mockDetectionResultEl.classList.add('hidden');
+
+        if (isCapacitorApp()) {
+            // ... Capacitor logic (omitted for brevity, assume captureScan is called)
+            captureScan(); // Mocking result after native camera attempt/cancellation
+        } else {
+            // ... WebRTC camera logic (omitted for brevity)
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                videoEl.srcObject = videoStream;
+                placeholderEl.classList.add('hidden');
+                videoEl.classList.remove('hidden');
+                startBtn.classList.add('hidden');
+                captureBtn.style.display = 'block';
+            } catch (err) {
+                scanError.textContent = 'Error: Could not access camera in web mode.';
+                scanError.classList.remove('hidden');
+                // Proceed to mock detection even if camera fails
+                captureScan();
+            }
+        }
+    }
+
+    function captureScan() {
+        if (!isCapacitorApp()) { stopCamera(); }
+
+        // --- MOCK OBJECT DETECTION ---
+        const mockItems = [
+            "Milk (2 Liters)", "Eggs (12)", "Flour (1kg)", "Sugar (500g)",
+            "Chicken Breast (1kg)", "Tomatoes (4)", "Onions (3)", "Olive Oil",
+            "Pasta (Spaghetti)", "Garlic Cloves (6)"
+        ];
+
+        // Filter out items already in the inventory (by name for simplicity)
+        const currentNames = window.inventory.map(item => item.name);
+        const newMockItems = mockItems.filter(item => !currentNames.includes(item));
+        const itemsToDisplay = newMockItems.slice(0, 5 + Math.floor(Math.random() * 5));
+
+        mockItemsListEl.innerHTML = '';
+        itemsToDisplay.forEach((item, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'flex items-center space-x-2';
+            itemDiv.innerHTML = `
+                <input type="checkbox" id="mock-item-${index}" checked class="form-checkbox h-4 w-4 text-teal-600 rounded">
+                <label for="mock-item-${index}" class="text-gray-700 text-sm flex-grow">${item}</label>
+            `;
+            mockItemsListEl.appendChild(itemDiv);
+        });
+
+        if (itemsToDisplay.length === 0) {
+             mockItemsListEl.innerHTML = '<p class="text-sm text-gray-500">No new items detected in the area.</p>';
+        }
+
+        mockDetectionResultEl.classList.remove('hidden');
+    }
+
+    function cancelScan() {
+        mockDetectionResultEl.classList.add('hidden');
+        startScan(); // Restart camera
+    }
+
+    function saveMockInventory() {
+        const checkboxes = mockItemsListEl.querySelectorAll('input[type="checkbox"]:checked');
+        const itemsToAdd = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent.trim());
+
+        // Map to objects with null expiry
+        const newItems = itemsToAdd.map(name => ({ name: name, expiry: null }));
+
+        const newInventory = [...window.inventory, ...newItems];
+        window.saveInventoryToDb(newInventory);
+
+        mockDetectionResultEl.classList.add('hidden');
+        switchTab('inventory');
+    }
+
+
+    // --- RECIPE GENERATION & SAVING LOGIC (Updated to remove limits) ---
+    const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
+    const API_KEY = "";
+
+    async function generateRecipes() {
+        // Removed recipe limit check for personal use.
+
+        if (window.inventory.length === 0) {
+            console.error('Your pantry is empty! Please scan or add items first.');
+            return;
+        }
+
+        const statusEl = document.getElementById('recipe-generation-status');
+        const outputContainerEl = document.getElementById('recipe-output-container');
+        const outputEl = document.getElementById('recipe-output');
+        const sourcesEl = document.getElementById('recipe-sources');
+        const saveBtn = document.getElementById('save-recipe-btn');
+
+        statusEl.classList.remove('hidden');
+        outputContainerEl.classList.add('hidden');
+        outputEl.textContent = '';
+        sourcesEl.innerHTML = '';
+        saveBtn.classList.add('hidden');
+
+        // 1. Get user inputs and constraints
+        const servingsInput = document.getElementById('servings-input');
+        const dietaryInput = document.getElementById('dietary-input').value.trim();
+        const timeInput = document.getElementById('time-input').value.trim();
+        const servingSize = servingsInput ? parseInt(servingsInput.value, 10) : 2;
+
+        // 2. Build inventory list (extract names from objects)
+        const inventoryList = window.inventory.map(item => item.name).join(', ');
+
+        // 3. Build constraint prompt
+        const unitPreference = window.units === 'metric' ?
+            'Use Metric measurements (grams, milliliters, Celsius) for all quantities and temperatures.' :
+            'Use Standard US measurements (ounces, teaspoons, cups, Fahrenheit) for all quantities and temperatures.';
+
+        let constraintPrompt = `Create recipes that serve ${servingSize} people.`;
+        if (dietaryInput) {
+            constraintPrompt += ` They must be strictly ${dietaryInput}.`;
+        }
+        if (timeInput && !isNaN(parseInt(timeInput))) {
+            constraintPrompt += ` The total preparation and cooking time should be less than ${timeInput} minutes.`;
+        }
+
+        const systemPrompt = `You are a world-class chef and recipe generator. ${unitPreference} ${constraintPrompt} Based *only* on the ingredients provided in the user's inventory, suggest 3 distinct, complete, easy-to-follow meal recipes. For each recipe:
+1. State the Recipe Name.
+2. List the required ingredients, noting which are *available* from the inventory and which, if any, are *missing* but essential (e.g., salt, pepper, specific spices are generally assumed).
+3. Provide simple, step-by-step instructions.
+4. If you use external knowledge (like from Google Search), make sure the recipe is actually possible with the provided inventory.`;
+
+        const userQuery = `My current pantry inventory is: ${inventoryList}. Generate 3 meal recipes for ${servingSize} people I can make right now. Ensure the output is clean, formatted text.`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`;
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            tools: [{ "google_search": {} }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+        };
+
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 5;
+        let delay = 1000;
+
+        while (attempts < maxAttempts && !success) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    outputEl.textContent = text;
+                    window.latestRecipeContent = text; // Store for saving
+                    saveBtn.classList.remove('hidden');
+
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+                    // ... (source extraction logic remains the same)
+
+                    success = true;
+
+                } else {
+                    outputEl.textContent = "Error: Could not retrieve a valid recipe from the AI Chef. Try again.";
+                    window.latestRecipeContent = null;
+                }
+
+            } catch (error) {
+                console.error(`Attempt ${attempts + 1} failed:`, error);
+                attempts++;
+                if (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        statusEl.classList.add('hidden');
+        outputContainerEl.classList.remove('hidden');
+
+        if (!success) {
+            outputEl.textContent = "Sorry, all attempts to connect to the recipe generator failed. Please check your connection and try again.";
+        }
+    }
+
+    // --- SAVED RECIPE FUNCTIONS ---
+    window.saveGeneratedRecipe = async () => {
+        if (!window.latestRecipeContent) {
+            console.error("No recipe generated to save.");
+            return;
+        }
+
+        // Extract the first recipe title
+        const lines = window.latestRecipeContent.split('\n');
+        const titleLine = lines.find(line => line.includes('Recipe Name:'));
+        const title = titleLine ? titleLine.replace(/Recipe Name: (\d\. )?/, '').trim() : "Untitled Recipe";
+
+        const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+        const recipesCollectionRef = collection(db, collectionPath);
+
+        try {
+            await addDoc(recipesCollectionRef, {
+                title: title,
+                content: window.latestRecipeContent,
+                createdAt: new Date().toISOString()
+            });
+            document.getElementById('save-recipe-btn').textContent = 'Saved!';
+            setTimeout(() => document.getElementById('save-recipe-btn').textContent = 'Save', 2000);
+            console.log("Recipe saved successfully!");
+            switchTab('saved'); // Switch to the saved tab to show the new recipe
+        } catch (e) {
+            console.error("Error saving recipe: ", e);
+            document.getElementById('save-recipe-btn').textContent = 'Error!';
+        }
+    };
+
+    window.renderSavedRecipes = () => {
+        const listEl = document.getElementById('saved-recipes-list');
+        const countEl = document.getElementById('saved-recipe-count');
+        const placeholder = document.getElementById('saved-recipes-placeholder');
+        const recipeViewEl = document.getElementById('selected-recipe-view');
+
+        if (!listEl || !countEl || !placeholder) return;
+
+        // Clear previous view
+        listEl.innerHTML = '';
+        recipeViewEl.classList.add('hidden');
+
+        countEl.textContent = `(${window.savedRecipes.length} recipes)`;
+        placeholder.classList.toggle('hidden', window.savedRecipes.length > 0);
+
+        // Render list of recipe titles
+        window.savedRecipes.forEach(recipe => {
+            const itemEl = document.createElement('button');
+            itemEl.className = 'w-full text-left p-3 bg-gray-50 hover:bg-teal-50 border border-gray-100 rounded-lg text-gray-700 text-sm transition truncate';
+            itemEl.textContent = recipe.title;
+            itemEl.onclick = () => window.viewSavedRecipe(recipe.id);
+            listEl.appendChild(itemEl);
+        });
+
+        // Re-render selected recipe if it still exists
+        if (window.selectedRecipeId) {
+            const selected = window.savedRecipes.find(r => r.id === window.selectedRecipeId);
+            if (selected) {
+                window.viewSavedRecipe(window.selectedRecipeId);
+            } else {
+                window.selectedRecipeId = null;
+            }
+        }
+    };
+
+    window.viewSavedRecipe = (recipeId) => {
+        const recipe = window.savedRecipes.find(r => r.id === recipeId);
+        const recipeViewEl = document.getElementById('selected-recipe-view');
+        const titleEl = document.getElementById('selected-recipe-title');
+        const contentEl = document.getElementById('selected-recipe-content');
+
+        if (recipe) {
+            titleEl.textContent = recipe.title;
+            contentEl.textContent = recipe.content;
+            recipeViewEl.classList.remove('hidden');
+            window.selectedRecipeId = recipeId;
+        }
+    };
+
+</script>
+</body>
+</html>
