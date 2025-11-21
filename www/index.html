@@ -407,7 +407,13 @@
                             <div id="selected-recipe-view" class="mt-6 pt-4 border-t border-gray-100 hidden">
                                 <h3 id="selected-recipe-title" class="text-xl font-bold text-teal-600 mb-2"></h3>
                                 <pre id="selected-recipe-content" class="recipe-content-pre"></pre>
-                                <div class="flex justify-end mt-3">
+                                <div class="flex justify-end gap-3 mt-3">
+                                    <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-indigo-200 text-sm" onclick="scheduleFromSavedRecipe(window.selectedSavedRecipeId)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                        </svg>
+                                        Add to Schedule
+                                    </button>
                                     <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-red-200 text-sm" onclick="deleteSavedRecipe(window.selectedSavedRecipeId)">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
@@ -503,6 +509,18 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, addDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Expose Firestore functions globally for window-scoped functions
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+        window.arrayUnion = arrayUnion;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.addDoc = addDoc;
+        window.deleteDoc = deleteDoc;
+
         // Global state and configuration
         window.currentUserId = null;
         // window.inventory holds objects: [{id: 'abc', name: 'Milk', expiry: '2025-10-20'}, ...]
@@ -527,7 +545,7 @@
         // ====================================================================================
         
         // 1. App ID for Firestore path (can be left as-is if you don't change it)
-        const appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f'; 
+        window.appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f'; 
         
         // 2. YOUR FIREBASE CONFIGURATION OBJECT - REPLACE ALL 'YOUR_PROJECT_ID' AND 'YOUR_FIREBASE_API_KEY'
         const firebaseConfig = {
@@ -633,7 +651,7 @@
         
         function setupInventoryListener() {
             if (!window.currentUserId || !window.db) return;
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
             const inventoryDocRef = doc(window.db, docPath, "inventory_list");
 
             onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
@@ -675,7 +693,7 @@
         // Shopping list listener and CRUD
         function setupShoppingListListener() {
             if (!window.currentUserId || !window.db) return;
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/shopping_list`;
             const listDocRef = doc(window.db, docPath, 'list');
 
             onSnapshot(listDocRef, { includeMetadataChanges: true }, (docSnap) => {
@@ -698,7 +716,7 @@
         window.saveShoppingListToDb = async (newList) => {
             if (!window.currentUserId || !window.db) return console.error('FIREBASE ERROR: Not ready (saveShoppingListToDb).');
             console.log('[saveShoppingListToDb] Saving', newList.length, 'items:', newList.map(i => i.name).join(', '));
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/shopping_list`;
             const listDocRef = doc(window.db, docPath, 'list');
             try {
                 await setDoc(listDocRef, { items: newList });
@@ -714,48 +732,37 @@
                 console.error('[Meal Schedule Listener] Cannot setup: userId=', window.currentUserId, 'db available=', !!window.db);
                 return;
             }
-            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
-            const inventoryDocRef = doc(window.db, `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
-            console.log('[Meal Schedule Listener] Setting up listener for path:', scheduleCollectionPath);
+            const inventoryDocPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, inventoryDocPath, 'inventory_list');
+            console.log('[Meal Schedule Listener] Setting up listener on inventory doc:', inventoryDocPath);
 
-            onSnapshot(scheduleDocRef, { includeMetadataChanges: true }, async (docSnap) => {
+            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
                 console.log('[Meal Schedule Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
-                console.log('[Meal Schedule Snapshot] Document exists:', docSnap.exists());
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    console.log('[Meal Schedule Snapshot] Raw data:', JSON.stringify(data, null, 2));
-                    window.mealSchedule = data.schedule || {};
-                    console.log('[Meal Schedule Snapshot] ✅ Updated to', Object.keys(window.mealSchedule).length, 'scheduled meals');
-                } else {
-                    // Fallback: attempt to load schedule stored inside inventory doc
-                    try {
-                        const invSnap = await getDoc(inventoryDocRef);
-                        if (invSnap.exists() && invSnap.data().schedule) {
-                            window.mealSchedule = invSnap.data().schedule || {};
-                            console.log('[Meal Schedule Snapshot] Fallback loaded from inventory doc. Meals:', Object.keys(window.mealSchedule).length);
-                        } else {
-                            window.mealSchedule = {};
-                            console.log('[Meal Schedule Snapshot] Document does not exist, cleared schedule (no fallback)');
-                        }
-                    } catch (e) {
-                        console.error('[Meal Schedule Snapshot] Fallback read failed:', e);
+                    if (data.schedule) {
+                        window.mealSchedule = data.schedule || {};
+                        console.log('[Meal Schedule Snapshot] ✅ Loaded from inventory doc:', Object.keys(window.mealSchedule).length, 'meals');
+                    } else {
                         window.mealSchedule = {};
+                        console.log('[Meal Schedule Snapshot] No schedule field in inventory doc');
                     }
+                } else {
+                    window.mealSchedule = {};
+                    console.log('[Meal Schedule Snapshot] Inventory doc does not exist');
                 }
                 if (window.renderSchedule) {
                     window.renderSchedule();
                     console.log('[Meal Schedule Snapshot] Render completed');
                 }
             }, (error) => {
-                console.error("FIREBASE ERROR: Meal Schedule Snapshot failed (Check security rules).", error);
-                console.error("Error details:", error.message, error.code);
+                console.error("FIREBASE ERROR: Meal Schedule Snapshot failed.", error);
             });
         }
 
         function setupSavedRecipeListener() {
             if (!window.currentUserId || !window.db) return;
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
             const savedRecipesCollectionRef = collection(window.db, collectionPath);
             const savedRecipesQuery = query(savedRecipesCollectionRef);
             
@@ -783,7 +790,7 @@
             }
             console.log('[appendItemsToInventory] Adding', itemsArray.length, 'items:', itemsArray.map(i => i.name).join(', '));
 
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
             const inventoryDocRef = doc(window.db, docPath, "inventory_list");
 
             try {
@@ -808,7 +815,7 @@
             if (!window.currentUserId || !window.db) return console.error("FIREBASE ERROR: User not authenticated or window.db not initialized (saveInventoryToDb).");
             console.log('[saveInventoryToDb] Saving', newInventory.length, 'items');
 
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
             const inventoryDocRef = doc(window.db, docPath, "inventory_list");
 
             try {
@@ -823,7 +830,7 @@
         window.deleteSavedRecipe = async (recipeId) => {
             if (!window.currentUserId || !recipeId || !window.db) return;
 
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
             const recipeDocRef = doc(window.db, collectionPath, recipeId);
 
             try {
@@ -837,7 +844,7 @@
         window.saveGeneratedRecipeToDb = async (title, content) => {
             if (!window.currentUserId || !window.db) return false;
 
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
             const recipesCollectionRef = collection(window.db, collectionPath);
             
             try {
@@ -2028,6 +2035,8 @@ ${recipe.instructions}
         window.renderSchedule = () => {
             const container = document.getElementById('calendar-container');
             if (!container) return;
+            console.log('[RenderSchedule] Called. window.mealSchedule keys:', Object.keys(window.mealSchedule));
+            console.log('[RenderSchedule] Full mealSchedule:', JSON.stringify(window.mealSchedule, null, 2));
             container.innerHTML = '';
 
             const today = new Date();
@@ -2043,6 +2052,9 @@ ${recipe.instructions}
 
                 const scheduled = window.mealSchedule[dateStr];
                 const isToday = i === 0;
+                if (scheduled) {
+                    console.log(`[RenderSchedule] Found schedule for ${dateStr}:`, scheduled.recipeTitle);
+                }
 
                 const dayCard = document.createElement('div');
                 dayCard.className = `border rounded-xl p-4 ${isToday ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white'} transition hover:shadow-md`;
@@ -2114,7 +2126,8 @@ ${recipe.instructions}
                 deductibleInventoryStrings: Array.isArray(recipe.deductibleInventoryStrings) ? recipe.deductibleInventoryStrings.slice() : []
             };
 
-            console.log('[ConfirmScheduleRecipe] Scheduling meal for', dateStr, 'total meals before save:', Object.keys(window.mealSchedule).length);
+            console.log('[ConfirmScheduleRecipe] Scheduling for', dateStr, 'Recipe:', recipe.recipeName);
+            console.log('[ConfirmScheduleRecipe] mealSchedule after add:', JSON.stringify(window.mealSchedule, null, 2));
             window.saveMealScheduleToDb();
             // Delayed verification call
             setTimeout(() => { window.debugFetchMealScheduleDoc && window.debugFetchMealScheduleDoc(); }, 2000);
@@ -2138,17 +2151,13 @@ ${recipe.instructions}
                 console.error('[Meal Schedule] Cannot save: userId=', window.currentUserId, 'db available=', !!window.db);
                 return;
             }
-            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
-            const inventoryDocRef = doc(window.db, `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
-            console.log('[Meal Schedule] Attempting to save to path:', scheduleCollectionPath);
+            const inventoryDocPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = window.doc(window.db, inventoryDocPath, 'inventory_list');
+            console.log('[Meal Schedule] Saving to inventory doc:', inventoryDocPath);
             console.log('[Meal Schedule] Schedule data:', JSON.stringify(window.mealSchedule, null, 2));
             try {
-                // Primary storage
-                await setDoc(scheduleDocRef, { schedule: window.mealSchedule });
-                // Redundant merged storage (fallback if rules block new collection)
-                await setDoc(inventoryDocRef, { schedule: window.mealSchedule }, { merge: true });
-                console.log('[Meal Schedule] ✅ Successfully saved (primary + fallback):', Object.keys(window.mealSchedule).length, 'meals');
+                await window.setDoc(inventoryDocRef, { schedule: window.mealSchedule }, { merge: true });
+                console.log('[Meal Schedule] ✅ Successfully saved:', Object.keys(window.mealSchedule).length, 'meals');
             } catch (error) {
                 console.error('[Meal Schedule] ❌ Save failed:', error);
                 console.error('[Meal Schedule] Error details:', error.message, error.code);
@@ -2157,17 +2166,32 @@ ${recipe.instructions}
 
         window.debugFetchMealScheduleDoc = async () => {
             if (!window.currentUserId || !window.db) return console.error('[Meal Schedule Debug] Not ready');
-            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
-            const inventoryDocRef = doc(window.db, `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
+            const inventoryDocRef = window.doc(window.db, `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
             try {
-                const s = await getDoc(scheduleDocRef);
-                const i = await getDoc(inventoryDocRef);
-                console.log('[Meal Schedule Debug] Dedicated doc exists:', s.exists(), s.exists() ? s.data() : null);
-                console.log('[Meal Schedule Debug] Inventory doc schedule field:', i.exists() ? (i.data().schedule || null) : null);
+                const i = await window.getDoc(inventoryDocRef);
+                console.log('[Meal Schedule Debug] Inventory doc exists:', i.exists());
+                console.log('[Meal Schedule Debug] Schedule field:', i.exists() ? (i.data().schedule || null) : null);
             } catch (e) {
                 console.error('[Meal Schedule Debug] Fetch error:', e);
             }
+        };
+
+        window.scheduleFromSavedRecipe = (recipeId) => {
+            const recipe = window.savedRecipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+
+            // Reuse the existing scheduling modal by populating latestGeneratedRecipes
+            // with the saved recipe, then triggering the scheduling flow
+            window.latestGeneratedRecipes = [{
+                title: recipe.title,
+                content: recipe.content,
+                deductibleInventoryStrings: [] // Saved recipes don't have inventory deductions pre-calculated
+            }];
+            window.selectedGeneratedRecipeIndex = 0;
+            
+            // Show the schedule modal
+            document.getElementById('schedule-recipe-modal').classList.remove('hidden');
+            document.getElementById('schedule-recipe-title').textContent = recipe.title;
         };
 
         window.viewScheduledRecipe = (dateStr) => {
