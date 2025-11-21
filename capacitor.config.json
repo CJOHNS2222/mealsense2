@@ -1,5 +1,14 @@
 {
   "appId": "com.MealSense2.app",
   "appName": "Meal Sense",
-  "webDir": "c:\\users\\cjohn\\mealsense2"
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "Camera": {
+      "webPath": "www",
+      "preferredCamera": "rear",
+      "allowEditing": false,
+      "quality": 90
+    }
+  }
 }
