@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -509,7 +508,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, addDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
         // Expose Firestore functions globally for window-scoped functions
         window.doc = doc;
@@ -525,7 +523,7 @@
 
         // Global state and configuration
         window.currentUserId = null;
-        // window.inventory holds objects: [{id: 'abc', name: 'Milk', expiry: '2025-10-20'}, ...]\
+        // window.inventory holds objects: [{id: 'abc', name: 'Milk', expiry: '2025-10-20'}, ...]
         window.inventory = []; 
         window.savedRecipes = [];
         // Shopping list items: [{id, name}]
@@ -539,13 +537,10 @@
         window.units = 'metric';
         window.db = null;
         window.auth = null;
-        window.functions = null;
-        window.callGemini = null;
-
          setLogLevel('Debug'); // Uncomment this for detailed Firebase logging
 
         // ====================================================================================
-        // === CRITICAL: API & FIREBASE CONFIGURATION (FOR STANDALONE/APK) ====================\
+        // === CRITICAL: API & FIREBASE CONFIGURATION (FOR STANDALONE/APK) ====================
         // === YOU MUST REPLACE THE PLACEHOLDERS BELOW WITH YOUR ACTUAL KEYS BEFORE COMPILING ===
         // ====================================================================================
         
@@ -554,15 +549,18 @@
         
         // 2. YOUR FIREBASE CONFIGURATION OBJECT - REPLACE ALL 'YOUR_PROJECT_ID' AND 'YOUR_FIREBASE_API_KEY'
         const firebaseConfig = {
-            apiKey: "AIzaSyCVlMsqNsW63L4m_u72Sv6WBFlw_pjUYpg",
-            authDomain: "gen-lang-client-0381888356.firebaseapp.com",
-            projectId: "gen-lang-client-0381888356",
-            storageBucket: "gen-lang-client-0381888356.appspot.com",
-            messagingSenderId: "89889306830",
-            appId: "1:89889306830:web:be0e6e5b707e2ba89ef89f"// (Optional, but recommended to match your config)
+  apiKey: "AIzaSyCVlMsqNsW63L4m_u72Sv6WBFlw_pjUYpg",
+  authDomain: "gen-lang-client-0381888356.firebaseapp.com",
+  projectId: "gen-lang-client-0381888356",
+  storageBucket: "gen-lang-client-0381888356.firebasestorage.app",
+  messagingSenderId: "89889306830",
+  appId: "1:89889306830:web:be0e6e5b707e2ba89ef89f"// (Optional, but recommended to match your config)
         // ====================================================================================
         };
                 
+    
+
+
         const userInfoEl = document.getElementById('user-info');
         
         // Disable tab navigation until Firebase is ready
@@ -577,8 +575,6 @@
             const app = initializeApp(firebaseConfig);
             window.db = getFirestore(app);
             window.auth = getAuth(app);
-            window.functions = getFunctions(app);
-            window.callGemini = httpsCallable(window.functions, 'callGemini');
             
             onAuthStateChanged(window.auth, async (user) => {
                 if (user) {
@@ -648,7 +644,300 @@
                 `;
             }
         }
-                // --- INVENTORY RENDER & CRUD ---
+
+
+        // --- FIRESTORE LISTENERS ---
+        
+        function setupInventoryListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                console.log('[Inventory Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const items = Array.isArray(data.items) ? data.items.map(item => ({ 
+                        id: item.id || null,
+                        name: item.name,
+                        expiry: item.expiry || null
+                    })) : [];
+                    // Migrate any items missing IDs to ensure UI actions work reliably
+                    const needsMigration = items.some(i => !i.id);
+                    if (needsMigration) {
+                        const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+                        const upgraded = items.map(i => ({ id: i.id || genId(), name: i.name, expiry: i.expiry || null }));
+                        window.inventory = upgraded;
+                        setDoc(inventoryDocRef, { items: upgraded }).catch(err => console.error('Migration save failed:', err));
+                    } else {
+                        window.inventory = items;
+                    }
+                    console.log('[Inventory Snapshot] Updated to', items.length, 'items:', items.map(i => i.name).join(', '));
+                } else {
+                    window.inventory = [];
+                    console.log('[Inventory Snapshot] Document does not exist, cleared inventory');
+                }
+                
+                // Force immediate re-render on every snapshot update
+                if (window.renderInventory) {
+                    window.renderInventory();
+                    console.log('[Inventory Snapshot] Render completed');
+                }
+                
+            }, (error) => {
+                console.error("FIREBASE ERROR: Inventory Snapshot failed (Check security rules).", error);
+            });
+        }
+
+        // Shopping list listener and CRUD
+        function setupShoppingListListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+
+            onSnapshot(listDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                console.log('[Shopping List Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.shoppingList = Array.isArray(data.items) ? data.items.map(i => ({ id: i.id || null, name: i.name })) : [];
+                    console.log('[Shopping List Snapshot] Updated to', window.shoppingList.length, 'items:', window.shoppingList.map(i => i.name).join(', '));
+                } else {
+                    window.shoppingList = [];
+                    console.log('[Shopping List Snapshot] Document does not exist, cleared list');
+                }
+                window.renderShoppingList && window.renderShoppingList();
+                console.log('[Shopping List Snapshot] Render completed');
+            }, (error) => {
+                console.error('FIREBASE ERROR: Shopping List Snapshot failed.', error);
+            });
+        }
+
+        window.saveShoppingListToDb = async (newList) => {
+            if (!window.currentUserId || !window.db) return console.error('FIREBASE ERROR: Not ready (saveShoppingListToDb).');
+            console.log('[saveShoppingListToDb] Saving', newList.length, 'items:', newList.map(i => i.name).join(', '));
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+            try {
+                await setDoc(listDocRef, { items: newList });
+                console.log('[saveShoppingListToDb] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+            } catch (e) {
+                console.error('FIREBASE ERROR: Saving shopping list failed:', e);
+            }
+        };
+
+        function setupMealScheduleListener() {
+            if (!window.currentUserId || !window.db) {
+                console.error('[Meal Schedule Listener] Cannot setup: userId=', window.currentUserId, 'db available=', !!window.db);
+                return;
+            }
+            const inventoryDocPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, inventoryDocPath, 'inventory_list');
+            console.log('[Meal Schedule Listener] Setting up listener on inventory doc:', inventoryDocPath);
+
+            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                console.log('[Meal Schedule Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.schedule) {
+                        window.mealSchedule = data.schedule || {};
+                        console.log('[Meal Schedule Snapshot] ✅ Loaded from inventory doc:', Object.keys(window.mealSchedule).length, 'meals');
+                    } else {
+                        window.mealSchedule = {};
+                        console.log('[Meal Schedule Snapshot] No schedule field in inventory doc');
+                    }
+                } else {
+                    window.mealSchedule = {};
+                    console.log('[Meal Schedule Snapshot] Inventory doc does not exist');
+                }
+                if (window.renderSchedule) {
+                    window.renderSchedule();
+                    console.log('[Meal Schedule Snapshot] Render completed');
+                }
+            }, (error) => {
+                console.error("FIREBASE ERROR: Meal Schedule Snapshot failed.", error);
+            });
+        }
+
+        function setupSavedRecipeListener() {
+            if (!window.currentUserId || !window.db) return;
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
+            const savedRecipesCollectionRef = collection(window.db, collectionPath);
+            const savedRecipesQuery = query(savedRecipesCollectionRef);
+            
+            onSnapshot(savedRecipesQuery, (querySnapshot) => {
+                window.savedRecipes = [];
+                querySnapshot.forEach((doc) => {
+                    window.savedRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Always call renderSavedRecipes() when data changes
+                window.renderSavedRecipes();
+                
+            }, (error) => {
+                console.error("FIREBASE ERROR: Recipes Snapshot failed.", error);
+            });
+        }
+
+
+        // --- FIRESTORE CRUD OPERATIONS ---
+
+        window.appendItemsToInventory = async (itemsArray) => {
+            if (!window.currentUserId || !window.db || itemsArray.length === 0) {
+                 console.error("FIREBASE ERROR: Cannot append items. User not authenticated or window.db not initialized.");
+                 return;
+            }
+            console.log('[appendItemsToInventory] Adding', itemsArray.length, 'items:', itemsArray.map(i => i.name).join(', '));
+
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            try {
+                await updateDoc(inventoryDocRef, {
+                    items: arrayUnion(...itemsArray)
+                });
+                console.log('[appendItemsToInventory] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+                
+            } catch (e) {
+                if (e.code === 'not-found') {
+                    console.log("Inventory document not found, creating it with initial items.");
+                    await setDoc(inventoryDocRef, { items: itemsArray });
+                } else {
+                    console.error("FIREBASE ERROR: Error appending inventory items: ", e);
+                }
+            }
+        };
+
+        // Overwrite function (used for deletion, modification, and initial creation)
+        window.saveInventoryToDb = async (newInventory) => {
+            if (!window.currentUserId || !window.db) return console.error("FIREBASE ERROR: User not authenticated or window.db not initialized (saveInventoryToDb).");
+            console.log('[saveInventoryToDb] Saving', newInventory.length, 'items');
+
+            const docPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            try {
+                await setDoc(inventoryDocRef, { items: newInventory });
+                console.log('[saveInventoryToDb] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error saving inventory to Firestore: ", e);
+            }
+        };
+
+        window.deleteSavedRecipe = async (recipeId) => {
+            if (!window.currentUserId || !recipeId || !window.db) return;
+
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipeDocRef = doc(window.db, collectionPath, recipeId);
+
+            try {
+                await deleteDoc(recipeDocRef);
+                window.selectedSavedRecipeId = null;
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error deleting document from Firestore: ", e);
+            }
+        };
+
+        window.saveGeneratedRecipeToDb = async (title, content) => {
+            if (!window.currentUserId || !window.db) return false;
+
+            const collectionPath = `artifacts/${window.appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipesCollectionRef = collection(window.db, collectionPath);
+            
+            try {
+                await addDoc(recipesCollectionRef, {
+                    title: title,
+                    content: content,
+                    createdAt: new Date().toISOString()
+                });
+                return true;
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error saving recipe to Firestore: ", e);
+                return false;
+            }
+        };
+
+    </script>
+
+    <script>
+        // --- GLOBAL STATE & VIEW MANAGEMENT ---
+        window.activeTab = 'inventory';
+        window.latestImageBase64 = null;
+        window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
+        
+        const GEMINI_VISION_MODEL = "gemini-2.5-flash-preview-09-2025";
+        const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
+        
+        // --- HELPER FUNCTIONS ---
+        
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+
+        function getDateDifferenceInDays(dateString) {
+            if (!dateString) return Infinity;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiryDate = new Date(dateString);
+            expiryDate.setHours(0, 0, 0, 0);
+            const diffTime = expiryDate.getTime() - today.getTime();
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function isWithinDays(dateString, days) {
+            const diff = getDateDifferenceInDays(dateString);
+            return diff > 0 && diff <= days;
+        }
+
+        function isExpiredToday(dateString) {
+            return getDateDifferenceInDays(dateString) <= 0;
+        }
+
+        const switchTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+
+            document.getElementById(tabName).classList.remove('hidden');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('tab-active');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.remove('tab-inactive');
+            window.activeTab = tabName;
+
+            if (tabName === 'inventory') { window.renderInventory(); }
+            if (tabName === 'shopping') { window.renderShoppingList && window.renderShoppingList(); }
+            if (tabName === 'schedule') { window.renderSchedule && window.renderSchedule(); }
+        };
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
+        });
+        
+        window.toggleUnits = (unit) => {
+            window.units = unit;
+            const metricBtn = document.getElementById('unit-metric-btn');
+            const standardBtn = document.getElementById('unit-standard-btn');
+
+            if (unit === 'metric') {
+                metricBtn.classList.add('bg-indigo-500', 'text-white');
+                metricBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                standardBtn.classList.remove('bg-indigo-500', 'text-white');
+                standardBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            } else {
+                standardBtn.classList.add('bg-indigo-500', 'text-white');
+                standardBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                metricBtn.classList.remove('bg-indigo-500', 'text-white');
+                metricBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab(window.activeTab);
+            window.toggleUnits(window.units || 'metric');
+        });
+        
+        // --- INVENTORY RENDER & CRUD ---
         // Image mapping helper for inventory thumbnails
         function getItemImage(name) {
             if (!name) return 'img/placeholder.svg';
@@ -989,7 +1278,13 @@
                 scanErrorEl.classList.remove('hidden');
                 return;
             }
-
+            
+            if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+                 scanErrorEl.textContent = "API Error: Please update YOUR_GEMINI_API_KEY in the script block to proceed.";
+                 scanErrorEl.classList.remove('hidden');
+                 return;
+            }
+            
             scanStatusEl.classList.remove('hidden');
             detectionResultEl.classList.add('hidden');
             scanErrorEl.classList.add('hidden');
@@ -1015,8 +1310,9 @@
                     }
                 }
             };
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_VISION_MODEL}:generateContent?key=${window.GEMINI_API_KEY}`;
             const payload = {
-                modelName: GEMINI_VISION_MODEL,
                 contents: [{
                     role: "user",
                     parts: [
@@ -1045,35 +1341,45 @@
                     attempts++;
                     scanStatusTextEl.textContent = `Sending request (Attempt ${attempts}/${maxAttempts})...`;
 
-                    // *** MODIFIED: Use Firebase Function ***
-                    const result = await window.callGemini(payload);
-                    
-                    const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                    if (responseData) {
+                    if (!response.ok) { 
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const jsonText = candidate.content.parts[0].text;
+                        
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            parsedJson = JSON.parse(jsonText);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
-                            throw new Error("Cloud Function returned invalid JSON structure.");
+                            console.error("Failed to parse JSON response:", jsonText, e);
+                            throw new Error("API returned invalid JSON structure.");
                         }
 
                         window.renderDetectedItems(parsedJson.detectedIngredients || []);
                         success = true;
                     } else {
-                        console.error("Cloud Function returned an empty or invalid response:", result);
-                        throw new Error("Vision model returned an empty or invalid response. Try a different image.");
+                        scanErrorEl.textContent = "Error: Vision model returned an empty or invalid response. Try a different image.";
+                        scanErrorEl.classList.remove('hidden');
+                        throw new Error("Empty or invalid candidate content from API.");
                     }
 
                 } catch (error) {
-                    console.error(`Vision processing Attempt ${attempts} failed:`, error);
                     if (attempts < maxAttempts) {
                         scanStatusTextEl.textContent = `Attempt failed. Retrying in ${delay / 1000}s...`;
                         await new Promise(resolve => setTimeout(resolve, delay));
                         delay *= 2;
                     } else {
-                        scanErrorEl.textContent = `Final attempt failed: ${error.message}. Cannot connect to Vision service. Check console for details.`;
+                        scanErrorEl.textContent = `Final attempt failed. Cannot connect to Vision service. Check console for API Key/Network errors.`;
                         scanErrorEl.classList.remove('hidden');
                     }
                 }
@@ -1159,6 +1465,11 @@ ${recipe.instructions}
                 document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Your pantry is empty! Please add or scan items before generating a recipe.</p>';
                 return;
             }
+            
+            if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+                 document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">API Error: Please update YOUR_GEMINI_API_KEY in the script block to proceed.</p>';
+                 return;
+            }
 
             const statusEl = document.getElementById('recipe-generation-status');
             statusEl.classList.remove('hidden');
@@ -1191,13 +1502,15 @@ ${recipe.instructions}
             let systemPrompt = `You are a world-class chef and recipe generator. ${unitPreference} ${constraintPrompt} `;
             
             if (allowMissingIngredients) {
-                systemPrompt += `Suggest exactly 3 distinct, complete, easy-to-follow meal recipes that can be made with the user\'s inventory, BUT you may include additional common ingredients that are missing. Clearly mark which ingredients are AVAILABLE from inventory and which are MISSING (need to be purchased). For 'missingIngredients', include specific quantities (e.g., '4 eggs', '2 cups flour'). For 'deductibleInventoryStrings', only include items that ARE in the user\'s inventory list.`;
+                systemPrompt += `Suggest exactly 3 distinct, complete, easy-to-follow meal recipes that can be made with the user's inventory, BUT you may include additional common ingredients that are missing. Clearly mark which ingredients are AVAILABLE from inventory and which are MISSING (need to be purchased). For 'missingIngredients', include specific quantities (e.g., '4 eggs', '2 cups flour'). For 'deductibleInventoryStrings', only include items that ARE in the user's inventory list.`;
             } else {
-                systemPrompt += `Based *only* on the ingredients provided in the user\'s inventory, suggest exactly 3 distinct, complete, easy-to-follow meal recipes. For each recipe, list the exact name/string of the item from the user\'s inventory that should be consumed (deleted from the app) upon making the recipe. Do NOT include basic pantry staples like salt, water, pepper, or oil in the 'deductibleInventoryStrings' list.`;
+                systemPrompt += `Based *only* on the ingredients provided in the user's inventory, suggest exactly 3 distinct, complete, easy-to-follow meal recipes. For each recipe, list the exact name/string of the item from the user's inventory that should be consumed (deleted from the app) upon making the recipe. Do NOT include basic pantry staples like salt, water, pepper, or oil in the 'deductibleInventoryStrings' list.`;
             }
 
             const userQuery = `My current pantry inventory is: ${inventoryList}. Generate 3 meal recipes for ${servingSize} people I can make${allowMissingIngredients ? ' (including recipes that may need additional ingredients)' : ' right now'}. Output the response strictly as a JSON array matching the provided schema.`;
 
+            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${window.GEMINI_API_KEY}`;
+            
             // NEW Structured Schema
             const recipeSchema = {
                 type: "ARRAY",
@@ -1209,12 +1522,12 @@ ${recipe.instructions}
                         "instructions": { "type": "STRING", "description": "Simple, step-by-step cooking instructions using numbered lists." },
                         "deductibleInventoryStrings": { 
                             "type": "ARRAY", 
-                            "description": "An array of strings. Each string MUST EXACTLY match the name property of an item in the user\'s INVENTORY list that was consumed (e.g., ['Milk (1L)', '5 Eggs']). This is for deduction.",
+                            "description": "An array of strings. Each string MUST EXACTLY match the name property of an item in the user's INVENTORY list that was consumed (e.g., ['Milk (1L)', '5 Eggs']). This is for deduction.",
                             "items": { "type": "STRING" }
                         },
                         "missingIngredients": {
                             "type": "ARRAY",
-                            "description": "Ingredients not available in user\'s inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
+                            "description": "Ingredients not available in user's inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
                             "items": { "type": "STRING" }
                         }
                     },
@@ -1223,7 +1536,6 @@ ${recipe.instructions}
             };
             
             const payload = {
-                modelName: GEMINI_TEXT_MODEL,
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 generationConfig: {
@@ -1242,18 +1554,30 @@ ${recipe.instructions}
                     attempts++;
                     statusEl.querySelector('p').textContent = `Consulting the Smart Chef (Attempt ${attempts}/${maxAttempts})...`;
 
-                    // *** MODIFIED: Use Firebase Function ***
-                    const result = await window.callGemini(payload);
-                    const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    const groundingMetadata = result?.data?.result?.candidates?.[0]?.groundingMetadata;
+                    const response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                    if (responseData) {
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Gemini API Error Response:', errorText);
+                        throw new Error(`HTTP error! status: ${response.status} - ${errorText.substring(0, 200)}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const jsonText = candidate.content.parts[0].text;
+                        
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            parsedJson = JSON.parse(jsonText);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
-                            throw new Error("Cloud Function returned invalid JSON structure.");
+                            console.error("Failed to parse JSON response:", jsonText, e);
+                            throw new Error("API returned invalid JSON structure.");
                         }
                         
                         // Store the structured recipes
@@ -1263,6 +1587,7 @@ ${recipe.instructions}
                         // Handle grounding sources
                         const sourcesEl = document.getElementById('recipe-sources');
                         sourcesEl.innerHTML = '';
+                        const groundingMetadata = candidate.groundingMetadata;
                         if (groundingMetadata && groundingMetadata.groundingAttributions) {
                             const sources = groundingMetadata.groundingAttributions
                                 .map(attribution => ({ uri: attribution.web?.uri, title: attribution.web?.title, }))
@@ -1277,8 +1602,9 @@ ${recipe.instructions}
                         
                         success = true;
                     } else {
-                        console.error("Cloud Function returned an empty or invalid response:", result);
-                        throw new Error("Could not retrieve a valid recipe from the AI Chef. Try again.");
+                        document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Could not retrieve a valid recipe from the AI Chef. Try again.</p>';
+                        window.latestGeneratedRecipes = [];
+                        throw new Error("Empty or invalid candidate content from API.");
                     }
 
                 } catch (error) {
@@ -1288,7 +1614,7 @@ ${recipe.instructions}
                         await new Promise(resolve => setTimeout(resolve, delay));
                         delay *= 2;
                     } else {
-                        document.getElementById('recipe-list-view').innerHTML = `<p class="text-red-500 text-sm font-bold">Error: ${error.message || 'Connection failed'}</p><p class="text-xs text-gray-600 mt-2">Check browser console (F12) for details. Verify your Cloud Function is deployed and has the correct permissions.</p>`;
+                        document.getElementById('recipe-list-view').innerHTML = `<p class="text-red-500 text-sm font-bold">Error: ${error.message || 'Connection failed'}</p><p class="text-xs text-gray-600 mt-2">Check browser console (F12) for details. Verify API key and network.</p>`;
                     }
                 }
             }
@@ -1354,8 +1680,9 @@ ${recipe.instructions}
                 setTimeout(() => saveBtn.textContent = 'Save This Recipe', 2000);
             }
         };
-                // --- NEW: INVENTORY DEDUCTION LOGIC ---
-                window.deductInventory = () => {
+        
+        // --- NEW: INVENTORY DEDUCTION LOGIC ---
+        window.deductInventory = () => {
             if (window.selectedGeneratedRecipeIndex === null) return;
             const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
             
@@ -1601,6 +1928,11 @@ ${recipe.instructions}
                 document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Please enter a recipe name to search.</p>';
                 return;
             }
+            
+            if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+                 document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">API Error: Please update YOUR_GEMINI_API_KEY in the script block to proceed.</p>';
+                 return;
+            }
 
             const statusEl = document.getElementById('recipe-generation-status');
             statusEl.classList.remove('hidden');
@@ -1621,6 +1953,8 @@ ${recipe.instructions}
             const systemPrompt = `You are a world-class chef and recipe generator. ${unitPreference} The user is searching for a specific recipe: "${recipeName}". Provide exactly 1 complete, detailed recipe for this dish that serves ${servingSize} people. If the user has inventory items, note which ingredients are available and which need to be purchased. List any inventory items from their list that would be consumed when making this recipe in the 'deductibleInventoryStrings' array.`;
 
             const userQuery = `I want to make "${recipeName}" for ${servingSize} people. ${window.inventory.length > 0 ? `My available inventory: ${inventoryList}. Indicate which ingredients I have and which I need to buy.` : 'Provide a complete ingredient list.'} Output as a JSON array with 1 recipe object matching the provided schema.`;
+
+            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${window.GEMINI_API_KEY}`;
             
             const recipeSchema = {
                 type: "ARRAY",
@@ -1637,7 +1971,7 @@ ${recipe.instructions}
                         },
                         "missingIngredients": {
                             "type": "ARRAY",
-                            "description": "Ingredients not available in user\'s inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
+                            "description": "Ingredients not available in user's inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
                             "items": { "type": "STRING" }
                         }
                     },
@@ -1646,7 +1980,6 @@ ${recipe.instructions}
             };
             
             const payload = {
-                modelName: GEMINI_TEXT_MODEL,
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 generationConfig: {
@@ -1656,12 +1989,24 @@ ${recipe.instructions}
             };
 
             try {
-                // *** MODIFIED: Use Firebase Function ***
-                const result = await window.callGemini(payload);
-                const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-                if (responseData) {
-                    const parsedJson = JSON.parse(responseData);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Gemini API Error Response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const jsonText = candidate.content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonText);
                     
                     window.latestGeneratedRecipes = parsedJson;
                     window.renderGeneratedRecipesList();
@@ -1837,8 +2182,8 @@ ${recipe.instructions}
             // Reuse the existing scheduling modal by populating latestGeneratedRecipes
             // with the saved recipe, then triggering the scheduling flow
             window.latestGeneratedRecipes = [{
-                recipeName: recipe.title,
-                recipeContent: recipe.content,
+                title: recipe.title,
+                content: recipe.content,
                 deductibleInventoryStrings: [] // Saved recipes don't have inventory deductions pre-calculated
             }];
             window.selectedGeneratedRecipeIndex = 0;
@@ -1888,7 +2233,7 @@ ${recipe.instructions}
                 const btn = document.getElementById('plan-shopping-btn');
                 if (btn) {
                     btn.textContent = 'No meals scheduled!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
+                    setTimeout(() => btn.textContent = 'Plan Week\'s Shopping', 2000);
                 }
                 return;
             }
@@ -1906,7 +2251,7 @@ ${recipe.instructions}
                 const btn = document.getElementById('plan-shopping-btn');
                 if (btn) {
                     btn.textContent = 'No missing ingredients!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
+                    setTimeout(() => btn.textContent = 'Plan Week\'s Shopping', 2000);
                 }
                 return;
             }
@@ -1923,7 +2268,7 @@ ${recipe.instructions}
                 const btn = document.getElementById('plan-shopping-btn');
                 if (btn) {
                     btn.textContent = 'Already on shopping list!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
+                    setTimeout(() => btn.textContent = 'Plan Week\'s Shopping', 2000);
                 }
                 return;
             }
@@ -1934,12 +2279,10 @@ ${recipe.instructions}
             const btn = document.getElementById('plan-shopping-btn');
             if (btn) {
                 btn.textContent = `Added ${additions.length} item(s)!`;
-                setTimeout(() => btn.textContent = "Plan Week's Shopping", 2500);
+                setTimeout(() => btn.textContent = 'Plan Week\'s Shopping', 2500);
             }
         };
 
     </script>
 </body>
 </html>
-
-
