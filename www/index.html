@@ -509,19 +509,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, addDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
-
-        // Expose Firestore functions globally for window-scoped functions
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.updateDoc = updateDoc;
-        window.arrayUnion = arrayUnion;
-        window.onSnapshot = onSnapshot;
-        window.collection = collection;
-        window.query = query;
-        window.addDoc = addDoc;
-        window.deleteDoc = deleteDoc;
 
         // Global state and configuration
         window.currentUserId = null;
@@ -648,7 +635,311 @@
                 `;
             }
         }
-                // --- INVENTORY RENDER & CRUD ---
+
+
+        // --- FIRESTORE LISTENERS ---
+        
+        function setupInventoryListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                console.log('[Inventory Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const items = Array.isArray(data.items) ? data.items.map(item => ({ 
+                        id: item.id || null,
+                        name: item.name,
+                        expiry: item.expiry || null
+                    })) : [];
+                    // Migrate any items missing IDs to ensure UI actions work reliably
+                    const needsMigration = items.some(i => !i.id);
+                    if (needsMigration) {
+                        const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+                        const upgraded = items.map(i => ({ id: i.id || genId(), name: i.name, expiry: i.expiry || null }));
+                        window.inventory = upgraded;
+                        setDoc(inventoryDocRef, { items: upgraded }).catch(err => console.error('Migration save failed:', err));
+                    } else {
+                        window.inventory = items;
+                    }
+                    console.log('[Inventory Snapshot] Updated to', items.length, 'items:', items.map(i => i.name).join(', '));
+                } else {
+                    window.inventory = [];
+                    console.log('[Inventory Snapshot] Document does not exist, cleared inventory');
+                }
+                
+                // Force immediate re-render on every snapshot update
+                if (window.renderInventory) {
+                    window.renderInventory();
+                    console.log('[Inventory Snapshot] Render completed');
+                }
+                
+            }, (error) => {
+                console.error("FIREBASE ERROR: Inventory Snapshot failed (Check security rules).", error);
+            });
+        }
+
+        // Shopping list listener and CRUD
+        function setupShoppingListListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+
+            onSnapshot(listDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                console.log('[Shopping List Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.shoppingList = Array.isArray(data.items) ? data.items.map(i => ({ id: i.id || null, name: i.name })) : [];
+                    console.log('[Shopping List Snapshot] Updated to', window.shoppingList.length, 'items:', window.shoppingList.map(i => i.name).join(', '));
+                } else {
+                    window.shoppingList = [];
+                    console.log('[Shopping List Snapshot] Document does not exist, cleared list');
+                }
+                window.renderShoppingList && window.renderShoppingList();
+                console.log('[Shopping List Snapshot] Render completed');
+            }, (error) => {
+                console.error('FIREBASE ERROR: Shopping List Snapshot failed.', error);
+            });
+        }
+
+        window.saveShoppingListToDb = async (newList) => {
+            if (!window.currentUserId || !window.db) return console.error('FIREBASE ERROR: Not ready (saveShoppingListToDb).');
+            console.log('[saveShoppingListToDb] Saving', newList.length, 'items:', newList.map(i => i.name).join(', '));
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+            try {
+                await setDoc(listDocRef, { items: newList });
+                console.log('[saveShoppingListToDb] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+            } catch (e) {
+                console.error('FIREBASE ERROR: Saving shopping list failed:', e);
+            }
+        };
+
+        function setupMealScheduleListener() {
+            if (!window.currentUserId || !window.db) {
+                console.error('[Meal Schedule Listener] Cannot setup: userId=', window.currentUserId, 'db available=', !!window.db);
+                return;
+            }
+            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+            const inventoryDocRef = doc(window.db, `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
+            console.log('[Meal Schedule Listener] Setting up listener for path:', scheduleCollectionPath);
+
+            onSnapshot(scheduleDocRef, { includeMetadataChanges: true }, async (docSnap) => {
+                console.log('[Meal Schedule Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
+                console.log('[Meal Schedule Snapshot] Document exists:', docSnap.exists());
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    console.log('[Meal Schedule Snapshot] Raw data:', JSON.stringify(data, null, 2));
+                    window.mealSchedule = data.schedule || {};
+                    console.log('[Meal Schedule Snapshot] ✅ Updated to', Object.keys(window.mealSchedule).length, 'scheduled meals');
+                } else {
+                    // Fallback: attempt to load schedule stored inside inventory doc
+                    try {
+                        const invSnap = await getDoc(inventoryDocRef);
+                        if (invSnap.exists() && invSnap.data().schedule) {
+                            window.mealSchedule = invSnap.data().schedule || {};
+                            console.log('[Meal Schedule Snapshot] Fallback loaded from inventory doc. Meals:', Object.keys(window.mealSchedule).length);
+                        } else {
+                            window.mealSchedule = {};
+                            console.log('[Meal Schedule Snapshot] Document does not exist, cleared schedule (no fallback)');
+                        }
+                    } catch (e) {
+                        console.error('[Meal Schedule Snapshot] Fallback read failed:', e);
+                        window.mealSchedule = {};
+                    }
+                }
+                if (window.renderSchedule) {
+                    window.renderSchedule();
+                    console.log('[Meal Schedule Snapshot] Render completed');
+                }
+            }, (error) => {
+                console.error("FIREBASE ERROR: Meal Schedule Snapshot failed (Check security rules).", error);
+                console.error("Error details:", error.message, error.code);
+            });
+        }
+
+        function setupSavedRecipeListener() {
+            if (!window.currentUserId || !window.db) return;
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const savedRecipesCollectionRef = collection(window.db, collectionPath);
+            const savedRecipesQuery = query(savedRecipesCollectionRef);
+            
+            onSnapshot(savedRecipesQuery, (querySnapshot) => {
+                window.savedRecipes = [];
+                querySnapshot.forEach((doc) => {
+                    window.savedRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Always call renderSavedRecipes() when data changes
+                window.renderSavedRecipes();
+                
+            }, (error) => {
+                console.error("FIREBASE ERROR: Recipes Snapshot failed.", error);
+            });
+        }
+
+
+        // --- FIRESTORE CRUD OPERATIONS ---
+
+        window.appendItemsToInventory = async (itemsArray) => {
+            if (!window.currentUserId || !window.db || itemsArray.length === 0) {
+                 console.error("FIREBASE ERROR: Cannot append items. User not authenticated or window.db not initialized.");
+                 return;
+            }
+            console.log('[appendItemsToInventory] Adding', itemsArray.length, 'items:', itemsArray.map(i => i.name).join(', '));
+
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            try {
+                await updateDoc(inventoryDocRef, {
+                    items: arrayUnion(...itemsArray)
+                });
+                console.log('[appendItemsToInventory] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+                
+            } catch (e) {
+                if (e.code === 'not-found') {
+                    console.log("Inventory document not found, creating it with initial items.");
+                    await setDoc(inventoryDocRef, { items: itemsArray });
+                } else {
+                    console.error("FIREBASE ERROR: Error appending inventory items: ", e);
+                }
+            }
+        };
+
+        // Overwrite function (used for deletion, modification, and initial creation)
+        window.saveInventoryToDb = async (newInventory) => {
+            if (!window.currentUserId || !window.db) return console.error("FIREBASE ERROR: User not authenticated or window.db not initialized (saveInventoryToDb).");
+            console.log('[saveInventoryToDb] Saving', newInventory.length, 'items');
+
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            try {
+                await setDoc(inventoryDocRef, { items: newInventory });
+                console.log('[saveInventoryToDb] Successfully wrote to Firestore');
+                // Snapshot listener will trigger automatic re-render
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error saving inventory to Firestore: ", e);
+            }
+        };
+
+        window.deleteSavedRecipe = async (recipeId) => {
+            if (!window.currentUserId || !recipeId || !window.db) return;
+
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipeDocRef = doc(window.db, collectionPath, recipeId);
+
+            try {
+                await deleteDoc(recipeDocRef);
+                window.selectedSavedRecipeId = null;
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error deleting document from Firestore: ", e);
+            }
+        };
+
+        window.saveGeneratedRecipeToDb = async (title, content) => {
+            if (!window.currentUserId || !window.db) return false;
+
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipesCollectionRef = collection(window.db, collectionPath);
+            
+            try {
+                await addDoc(recipesCollectionRef, {
+                    title: title,
+                    content: content,
+                    createdAt: new Date().toISOString()
+                });
+                return true;
+            } catch (e) {
+                console.error("FIREBASE ERROR: Error saving recipe to Firestore: ", e);
+                return false;
+            }
+        };
+
+    </script>
+
+    <script>
+        // --- GLOBAL STATE & VIEW MANAGEMENT ---
+        window.activeTab = 'inventory';
+        window.latestImageBase64 = null;
+        window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
+        
+        const GEMINI_VISION_MODEL = "gemini-2.5-flash-preview-09-2025";
+        const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
+        
+        // --- HELPER FUNCTIONS ---
+        
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+
+        function getDateDifferenceInDays(dateString) {
+            if (!dateString) return Infinity;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiryDate = new Date(dateString);
+            expiryDate.setHours(0, 0, 0, 0);
+            const diffTime = expiryDate.getTime() - today.getTime();
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function isWithinDays(dateString, days) {
+            const diff = getDateDifferenceInDays(dateString);
+            return diff > 0 && diff <= days;
+        }
+
+        function isExpiredToday(dateString) {
+            return getDateDifferenceInDays(dateString) <= 0;
+        }
+
+        const switchTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+
+            document.getElementById(tabName).classList.remove('hidden');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('tab-active');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.remove('tab-inactive');
+            window.activeTab = tabName;
+
+            if (tabName === 'inventory') { window.renderInventory(); }
+            if (tabName === 'shopping') { window.renderShoppingList && window.renderShoppingList(); }
+            if (tabName === 'schedule') { window.renderSchedule && window.renderSchedule(); }
+        };
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
+        });
+        
+        window.toggleUnits = (unit) => {
+            window.units = unit;
+            const metricBtn = document.getElementById('unit-metric-btn');
+            const standardBtn = document.getElementById('unit-standard-btn');
+
+            if (unit === 'metric') {
+                metricBtn.classList.add('bg-indigo-500', 'text-white');
+                metricBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                standardBtn.classList.remove('bg-indigo-500', 'text-white');
+                standardBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            } else {
+                standardBtn.classList.add('bg-indigo-500', 'text-white');
+                standardBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+                metricBtn.classList.remove('bg-indigo-500', 'text-white');
+                metricBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab(window.activeTab);
+            window.toggleUnits(window.units || 'metric');
+        });
+        
+        // --- INVENTORY RENDER & CRUD ---
         // Image mapping helper for inventory thumbnails
         function getItemImage(name) {
             if (!name) return 'img/placeholder.svg';
@@ -1828,24 +2119,6 @@ ${recipe.instructions}
             } catch (e) {
                 console.error('[Meal Schedule Debug] Fetch error:', e);
             }
-        };
-
-        window.scheduleFromSavedRecipe = (recipeId) => {
-            const recipe = window.savedRecipes.find(r => r.id === recipeId);
-            if (!recipe) return;
-
-            // Reuse the existing scheduling modal by populating latestGeneratedRecipes
-            // with the saved recipe, then triggering the scheduling flow
-            window.latestGeneratedRecipes = [{
-                recipeName: recipe.title,
-                recipeContent: recipe.content,
-                deductibleInventoryStrings: [] // Saved recipes don't have inventory deductions pre-calculated
-            }];
-            window.selectedGeneratedRecipeIndex = 0;
-            
-            // Show the schedule modal
-            document.getElementById('schedule-recipe-modal').classList.remove('hidden');
-            document.getElementById('schedule-recipe-title').textContent = recipe.title;
         };
 
         window.viewScheduledRecipe = (dateStr) => {
