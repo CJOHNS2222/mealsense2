@@ -3,7 +3,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors")({origin: true});
 const { defineString } = require('firebase-functions/params');
 
-const geminiAPIKey = defineString("GEMINI_API_KEY");
+// Using a new secret name to bypass any potential caching issues.
+const geminiAPIKey = defineString("GEMINI_API_KEY_LATEST");
 
 /**
  * HTTPs function that can handle both text and vision requests to the Gemini API.
