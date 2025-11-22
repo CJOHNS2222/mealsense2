@@ -5,14 +5,14 @@ const { defineString } = require('firebase-functions/params');
 
 const geminiAPIKey = defineString("GEMINI_API_KEY");
 
-// Get Gemini Key from Firebase config
-const genAI = new GoogleGenerativeAI(geminiAPIKey.value());
-
 /**
  * HTTPs function that can handle both text and vision requests to the Gemini API.
  */
 exports.callGemini = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
+    // Initialize the Gemini client inside the function
+    const genAI = new GoogleGenerativeAI(geminiAPIKey.value());
+
     // The onCall authentication check is no longer available.
     // For now, we are allowing unauthenticated access.
     // TODO: Implement authentication for onRequest functions if needed.
