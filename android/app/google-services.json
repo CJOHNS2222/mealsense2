@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "89889306830",
+    "firebase_url": "https://gen-lang-client-0381888356-default-rtdb.firebaseio.com",
+    "project_id": "gen-lang-client-0381888356",
+    "storage_bucket": "gen-lang-client-0381888356.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:89889306830:android:ac2eb9425e3c8c859ef89f",
+        "android_client_info": {
+          "package_name": "com.MealSense2.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQV9yO6PodGE8-_kY4yeeVY-0wUjBTfXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
