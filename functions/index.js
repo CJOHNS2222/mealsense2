@@ -31,7 +31,7 @@ exports.callGemini = functions.https.onRequest((req, res) => {
     try {
       const model = genAI.getGenerativeModel({
         model: modelName,
-        systemInstruction: systemInstruction,
+        systemInstruction: req.body.data.systemInstruction,
       });
 
       const result = await model.generateContent({
