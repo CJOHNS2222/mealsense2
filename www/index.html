@@ -2,939 +2,508 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Smart Pantry Chef</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Framework7 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@8/framework7-bundle.min.css">
+    
+    <!-- Custom styles -->
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
+        :root {
+            --f7-theme-color: #6366f1;
+            --f7-theme-color-rgb: 99, 102, 241;
+            --f7-theme-color-shade: #4f46e5;
+            --f7-theme-color-tint: #818cf8;
+            --f7-safe-area-left: 0px;
+            --f7-safe-area-right: 0px;
+            /* App background color (tuned to image red) */
+            --app-bg-color: #dc2626;
         }
-        .container {
-            max-width: 480px;
-            margin: auto;
-            min-height: 10vh; /* Changed for better view in editor */
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-        }
-        .tab-button {
-            padding: 0.75rem 1rem;
-            flex-grow: 1;
-            text-align: center;
-            border-radius: 0.5rem 0.5rem 0 0;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 600;
-        }
-        .tab-active {
-            background-color: #ffffff;
-            color: #10B981; /* Emerald 500 */
-            border-bottom: 3px solid #10B981;
-        }
-        .tab-inactive {
-            background-color: #e5e7eb; /* Gray 200 */
-            color: #6B7280; /* Gray 500 */
-        }
-        .card {
-            background-color: #ffffff;
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #10B981;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Style for recipe content display */
-        .recipe-content-pre {
-            white-space: pre-wrap;
-            background-color: #f9f9f9;
-            border: 1px solid #e5eeeb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            color: #1f2937;
-        }
-        #recipe-list-container {
-            min-height: 150px; /* Ensure space for list view */
-        }
-        .hidden-input {
-            display: none;
-        }
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+        
+        .item-thumbnail {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
+            border: 1px solid #e5e7eb;
         }
-        .modal-content {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        
+        .item-thumbnail img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 0px;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: #374151;
+            border: none;
+        }
+        .quantity-btn img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            display: block;
+            border: none;
+        }
+        
+        .button img {
+            height: 20px;
+            width: auto;
+            object-fit: contain;
+            vertical-align: middle;
+            border: none;
+        }
+        
+        .button-small img {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            border: none;
+        }
+        
+        .button-large img {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            border: none;
+        }
+        
+        .button-outline {
+            border: 1px solid currentColor;
+        }
+        
+        .button-outline img {
+            border: none !important;
+        }
+        
+        .button-fill {
+            border: none;
+        }
+        
+        .button-fill img {
+            border: none !important;
+        }
+        
+        label.button img {
+            border: none !important;
+        }
+        
+        .quantity-value {
+            min-width: 24px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .expired-item {
+            background: #fee2e2 !important;
+        }
+        
+        .expiring-soon-item {
+            background: #fef3c7 !important;
+        }
+        
+        .scan-preview-box {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+        }
+        
+        .scan-preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+        }
+
+        /* Apply red background across main containers */
+        body,
+        .view,
+        .page,
+        .page-content {
+            background-color: var(--app-bg-color) !important;
         }
     </style>
 </head>
-<body class="p-4">
-    <div class="container bg-white">
-        <header class="text-center py-4 mb-4">
-            <h1 class="text-3xl font-bold text-gray-800">Smart Pantry Chef</h1>
-            <p class="text-sm text-gray-500 mt-1" id="user-info">Authenticating...</p>
-            <p class="text-xs text-blue-600 mt-1" id="gemini-status">Testing Gemini API...</p>
-            <button class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded mt-1" onclick="debugGeminiConfig()">Debug API Config</button>
-        </header>
-
-        <!-- Tab Navigation -->
-        <nav class="flex mb-4 sticky top-0 bg-white z-10 rounded-t-lg shadow-md">
-            <button class="tab-button" data-tab="inventory">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" />
-                </svg>
-                Inventory
-            </button>
-            <button class="tab-button" data-tab="recipes">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" />
-                </svg>
-                Recipes
-            </button>
-            <button class="tab-button" data-tab="schedule">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                </svg>
-                Schedule
-            </button>
-            <button class="tab-button" data-tab="shopping">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M16 6H4l1 10a2 2 0 002 2h6a2 2 0 002-2l1-10zM6 6a4 4 0 118 0" />
-                </svg>
-                Shopping
-            </button>
-        </nav>
-
-        <!-- Tab Content -->
-        <main class="flex-grow">
-            <!-- Inventory Tab -->
-            <div id="inventory" class="tab-content hidden">
-                <!-- Scanner Section (Collapsible) -->
-                <details class="card space-y-4 mb-4">
-                    <summary class="text-xl font-semibold text-gray-700 cursor-pointer hover:text-indigo-600 transition flex items-center justify-between">
-                        <span>📷 Scan Items (Gemini Vision)</span>
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </summary>
-                    <div class="space-y-4 mt-4">
-                        <p class="text-sm text-gray-500">
-                            Capture a photo or upload an image of your pantry/fridge items.
-                        </p>
-
-                        <!-- Image Capture/Upload Inputs -->
-                        <div class="space-y-3">
-                            <label class="block text-sm font-medium text-gray-700">Capture or Upload Pantry Image</label>
-                            <div class="flex gap-2">
-                                <!-- Primary: Camera Scan -->
-                                <label for="camera-input" class="flex-1 text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-xl transition cursor-pointer shadow-lg shadow-teal-200">
-                                    <svg class="h-5 w-5 inline mr-1 -mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3h-2a.5.5 0 00-.354.146L7.293 4.707A1 1 0 016.586 5H4zm6 9a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
-                                    Camera Scan
-                                </label>
-                                <!-- Secondary: File Upload -->
-                                <label for="file-input" class="flex-1 text-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-4 rounded-xl transition cursor-pointer">
-                                    <svg class="h-5 w-5 inline mr-1 -mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 13a1.5 1.5 0 01-1.5-1.5v-4A1.5 1.5 0 015.5 6h7A1.5 1.5 0 0114 7.5v4a1.5 1.5 0 01-1.5 1.5h-7zm0-1h7a.5.5 0 00.5-.5v-4a.5.5 0 00-.5-.5h-7a.5.5 0 00-.5.5v4a.5.5 0 00.5.5z"/><path fill-rule="evenodd" d="M3.707 3.293A1 1 0 003 4v12a2 2 0 002 2h10a2 2 0 002-2V4a1 1 0 00-1-1h-3.586a1 1 0 00-.707.293l-1.707 1.707a1 1 0 01-.707.293H7.707a1 1 0 01-.707-.293L5.707 3.293A1 1 0 004.707 3h-1.414zM4.707 4a1 1 0 011.414 0L7 5.586l1.293-1.293a1 1 0 011.414 0L11 5.586l1.293-1.293a1 1 0 011.414 0H14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1h.414z" clip-rule="evenodd" /></svg>
-                                    Upload File
-                                </label>
-                            </div>
-                            <!-- Hidden file inputs -->
-                            <input type="file" id="camera-input" accept="image/*" capture="camera" class="hidden-input">
-                            <input type="file" id="file-input" accept="image/*" class="hidden-input">
-                            
-                            <div class="relative w-full aspect-video bg-gray-200 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
-                                <img id="image-preview" class="hidden w-full h-full object-cover" alt="Image Preview" />
-                                <p id="image-placeholder" class="text-gray-500">Preview Area</p>
+<body>
+    <div id="app">
+        <!-- Main View -->
+        <div class="view view-main view-init safe-areas" data-master-detail-breakpoint="768">
+            <!-- Top Navbar -->
+            <div class="navbar">
+                <div class="navbar-bg"></div>
+                <div class="navbar-inner">
+                    <div class="title">Smart Pantry Chef</div>
+                </div>
+            </div>
+            
+            <!-- Toolbar/Tabs -->
+            <div class="toolbar toolbar-bottom tabbar">
+                <div class="toolbar-inner">
+                    <a href="#tab-inventory" class="tab-link tab-link-active">
+                        <i class="icon"><img src="img/inventory.jpg" alt="Inventory" style="width: 38px; height: 38px;"></i>
+                    </a>
+                    <a href="#tab-recipes" class="tab-link">
+                        <i class="icon"><img src="img/recipes.jpg" alt="Recipes" style="width: 38px; height: 38px;"></i>
+                    </a>
+                    <a href="#tab-schedule" class="tab-link">
+                        <i class="icon"><img src="img/schedule.jpg" alt="Schedule" style="width: 38px; height: 38px;"></i>
+                    </a>
+                    <a href="#tab-shopping" class="tab-link">
+                        <i class="icon"><img src="img/shopping.jpg" alt="Shopping" style="width: 38px; height: 38px;"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Page content with tabs -->
+            <div class="page">
+                <div class="tabs">
+                    <!-- Inventory Tab -->
+                    <div id="tab-inventory" class="tab tab-active page-content">
+                        <!-- Scanner Section -->
+                        <div class="block-title">Scanner</div>
+                        <div class="card">
+                            <div class="card-content card-content-padding">
+                                <div id="scan-preview-container" class="scan-preview-box">
+                                    <div id="scan-placeholder">
+                                        <i class="f7-icons" style="font-size: 48px; color: #94a3b8;">camera</i>
+                                        <p style="color: #64748b; margin-top: 8px;">No image selected</p>
+                                    </div>
+                                    <img id="scan-preview" class="scan-preview-img" style="display: none;">
+                                </div>
+                                <div class="row" style="margin-top: 16px;">
+                                    <div class="col-50">
+                                        <label class="button button-fill button-small" style="cursor: pointer;">
+                                            <img src="img/scanimage.jpg" alt="Camera Capture">
+                                            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                                        </label>
+                                    </div>
+                                    <div class="col-50">
+                                        <label class="button[disabled]" style="cursor: pointer;">
+                                            <img src="img/photogallery.jpg" alt="Gallery">
+                                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                        </label>
+                                    </div>
+                                </div>
+                                <button id="process-scan-btn" class="button button-small button-fill img" disabled style="margin-top: 12px; border: none;">
+                                    <img src="img/scanimage.jpg" alt="Scan Image">
+                                </button>
+                                <div id="scan-status" class="text-align-center" style="display: none; margin-top: 16px;">
+                                    <div class="preloader"></div>
+                                    <p id="scan-status-text" style="margin-top: 8px; color: #6366f1;">Analyzing...</p>
+                                </div>
+                                <div id="scan-error" class="block-footer" style="display: none; color: #ef4444; margin-top: 12px;"></div>
                             </div>
                         </div>
                         
-                        <button id="process-scan-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-indigo-200 disabled:opacity-50" disabled onclick="processImageForInventory()">
-                            Analyze Image & Detect Ingredients
-                        </button>
+                        <!-- Detection Results -->
+                        <div id="detection-result" style="display: none;">
+                            <div class="block-title">Detected Items</div>
+                            <div class="list">
+                                <ul id="detected-items-list"></ul>
+                            </div>
+                            <div class="block">
+                                <button class="button button-fill button-large" onclick="saveDetectedInventory()">
+                                    <img src="img/addtolist.jpg" alt="Add Detected Items">
+                                </button>
+                            </div>
+                        </div>
                         
-                        <div id="scan-status" class="text-center py-2 hidden">
-                            <div class="spinner"></div>
-                            <p class="text-sm text-gray-600 mt-2" id="scan-status-text">Analyzing image with Gemini Vision...</p>
+                        <!-- Manual Add -->
+                        <div class="block-title">Add Item Manually</div>
+                        <div class="list no-hairlines-md">
+                            <ul>
+                                <li class="item-content item-input">
+                                    <div class="item-inner">
+                                        <div class="item-input-wrap">
+                                            <input type="text" id="manual-item-input" placeholder="Item name">
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="item-content item-input">
+                                    <div class="item-inner">
+                                        <div class="item-input-wrap">
+                                            <input type="date" id="manual-expiry-input" placeholder="Expiry date (optional)">
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
-
-                        <!-- Detection Result -->
-                        <div id="detection-result" class="hidden mt-4 p-4 border-l-4 border-yellow-400 bg-yellow-50 rounded-lg space-y-3">
-                            <p class="font-semibold text-yellow-800">Detected Items (Review & Confirm)</p>
-                            <div id="detected-items-list" class="mt-2 space-y-2">
-                                <!-- Items will be injected here -->
-                            </div>
-                            <div class="flex gap-2 mt-4">
-                                <button class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl transition" onclick="resetScanner()">Cancel</button>
-                                <button id="save-inventory-btn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-teal-200" onclick="saveDetectedInventory()">Confirm & Save</button>
-                            </div>
-                        </div>
-                        <p id="scan-error" class="text-red-500 text-sm hidden mt-2"></p>
-                    </div>
-                </details>
-
-                <div class="card space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700 flex justify-between items-center">
-                        Current Pantry
-                        <span id="item-count" class="text-sm font-normal text-gray-500"></span>
-                    </h2>
-                    <div id="inventory-list" class="grid grid-cols-2 gap-3">
-                        <p class="text-gray-500" id="inventory-placeholder">Your pantry is loading or empty. Scan some items!</p>
-                        <!-- Items rendered here -->
-                    </div>
-                    
-                    <!-- New Batch Delete Buttons -->
-                    <div id="delete-controls" class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-100 mt-4 hidden">
-                        <button id="delete-selected-btn" class="flex-grow bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition disabled:opacity-50" onclick="deleteSelectedItems()" disabled>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
-                            </svg>
-                            Delete Selected
-                        </button>
-                        <button id="remove-all-btn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl transition" onclick="removeAllItems()">Remove All</button>
-                    </div>
-
-                    <div class="pt-4 border-t border-gray-100 mt-4">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Add Item Manually</h3>
-                        <div class="flex gap-2 mb-2">
-                            <input type="text" id="manual-item-input" placeholder="e.g., Cheddar Cheese (500g)" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div class="flex gap-2 items-end">
-                             <!-- Expiry Date Input (for manual add) -->
-                            <div class="flex-grow">
-                                <label for="manual-expiry-input" class="block text-xs font-medium text-gray-500 mb-1">Expiration Date (Optional)</label>
-                                <input type="date" id="manual-expiry-input" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                            <button id="add-item-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition h-10" onclick="addManualItem()">Add</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Schedule Tab -->
-            <div id="schedule" class="tab-content hidden">
-                <div class="card space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h2 class="text-xl font-semibold text-gray-700">Weekly Meal Schedule</h2>
-                            <p class="text-sm text-gray-500">Plan your meals for the next 7 days</p>
-                        </div>
-                        <button id="plan-shopping-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-2 px-4 rounded-xl transition shadow-lg" onclick="planWeeksShopping()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                            </svg>
-                            Plan Week's Shopping
-                        </button>
-                    </div>
-                    <div id="calendar-container" class="space-y-3">
-                        <!-- Calendar days will be rendered here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Shopping List Tab -->
-            <div id="shopping" class="tab-content hidden">
-                <div class="card space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700 flex justify-between items-center">
-                        Shopping List
-                        <div class="flex items-center gap-3">
-                            <span id="shopping-count" class="text-sm font-normal text-gray-500"></span>
-                            <button onclick="clearShoppingList()" class="text-xs bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-lg transition">
-                                Remove All
+                        <div class="block">
+                            <button class="button button-fill" onclick="window.addManualItem()">
+                                <img src="img/addtopantry.jpg" alt="Add Item">
                             </button>
                         </div>
-                    </h2>
-
-                    <div class="flex gap-2">
-                        <input id="shopping-input" type="text" placeholder="e.g., 2x Chicken breast, Paprika" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onkeydown="if(event.key==='Enter') addShoppingItem()" />
-                        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition" onclick="addShoppingItem()">Add</button>
-                    </div>
-
-                    <div id="shopping-list" class="space-y-2">
-                        <p class="text-gray-500" id="shopping-placeholder">Your shopping list is empty.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recipes Tab -->
-            <div id="recipes" class="tab-content hidden">
-                <div class="card space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700">Meal Planner (Gemini Text + Search)</h2>
-                    <p class="text-sm text-gray-500">Generate grounded recipes using your current inventory list.</p>
-                    
-                    <!-- NEW: Recipe Search Feature -->
-                    <div class="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                        <h3 class="text-md font-semibold text-purple-700 mb-2">🔍 Search for a Specific Recipe</h3>
-                        <p class="text-xs text-gray-600 mb-3">Request any recipe by name (e.g., "Chicken Parmesan", "Chocolate Chip Cookies")</p>
-                        <div class="flex gap-2">
-                            <input type="text" id="recipe-search-input" placeholder="Enter recipe name..." class="flex-grow p-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                            <button id="search-recipe-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-purple-200" onclick="searchSpecificRecipe()">
-                                Search
-                            </button>
+                        
+                        <!-- Inventory List -->
+                        <div class="block-title">
+                            Your Inventory <span id="item-count" style="color: #6b7280;">(0 items)</span>
                         </div>
-                    </div>
-                    
-                    <div class="border-t border-gray-200 my-4"></div>
-                    <p class="text-sm font-semibold text-gray-700">Or generate recipes from your inventory:</p>
-                    
-                    <!-- Recipe Constraints -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="servings-input" class="block text-sm font-medium text-gray-700 mb-1">Servings Required</label>
-                            <input type="number" id="servings-input" value="2" min="1" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <div id="inventory-placeholder" class="block text-align-center" style="color: #9ca3af;">
+                            <i class="f7-icons" style="font-size: 64px; color: #d1d5db;">cube_box</i>
+                            <p>No items in inventory</p>
                         </div>
-                        <div>
-                            <label for="dietary-input" class="block text-sm font-medium text-gray-700 mb-1">Dietary Filter (Optional)</label>
-                            <input type="text" id="dietary-input" placeholder="e.g., Vegetarian" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <div class="list media-list" id="inventory-list-container">
+                            <ul id="inventory-list"></ul>
                         </div>
-                        <div class="col-span-2">
-                            <label for="time-input" class="block text-sm font-medium text-gray-700 mb-1">Max Cook/Prep Time (Optional, mins)</label>
-                            <input type="number" id="time-input" placeholder="e.g., 30" min="5" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                    </div>
-                    
-                    <!-- NEW: Allow Missing Ingredients Checkbox -->
-                    <div class="flex items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <input type="checkbox" id="allow-missing-ingredients" class="form-checkbox h-5 w-5 text-indigo-600 rounded mr-3">
-                        <label for="allow-missing-ingredients" class="text-sm font-medium text-gray-700">
-                            <span class="font-semibold text-yellow-700">Include recipes that require additional ingredients</span>
-                            <span class="block text-xs text-gray-600 mt-1">Generator will suggest recipes even if some ingredients are missing from inventory</span>
-                        </label>
-                    </div>
-
-                    <!-- Unit Selector -->
-                    <div class="flex rounded-xl border border-gray-300 overflow-hidden shadow-inner mt-2">
-                        <button id="unit-metric-btn" class="unit-toggle-btn w-1/2 py-2 text-sm font-semibold transition bg-indigo-500 text-white" data-unit="metric" onclick="window.toggleUnits('metric')">
-                            Metric (g, ml, °C)
-                        </button>
-                        <button id="unit-standard-btn" class="unit-toggle-btn w-1/2 py-2 text-sm font-semibold transition bg-white text-gray-600 hover:bg-gray-50" data-unit="standard" onclick="window.toggleUnits('standard')">
-                            Standard (oz, tsp, °F)
-                        </button>
-                    </div>
-
-                    <button id="generate-recipe-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-pink-200" onclick="generateRecipes()">
-                        Generate 3 Recipes
-                    </button>
-
-                    <div id="recipe-generation-status" class="text-center py-4 hidden">
-                        <div class="spinner"></div>
-                        <p class="text-sm text-gray-600 mt-2">Consulting the Smart Chef...</p>
-                    </div>
-
-                    <!-- Recipe Output Container (Holds list or details) -->
-                    <div id="recipe-list-container" class="mt-4">
-                        <div id="recipe-list-view" class="space-y-2">
-                            <p class="text-gray-500 text-sm">Hit "Generate 3 Recipes" above to get started!</p>
-                            <!-- List of recipe titles goes here -->
-                        </div>
-
-                        <!-- Recipe Detail View (Hidden until a recipe is clicked) -->
-                        <div id="recipe-detail-view" class="hidden mt-4 p-4 border-t border-gray-100">
-                            <h3 id="generated-recipe-title" class="text-xl font-bold text-teal-600 mb-2"></h3>
-                            
-                            <div class="flex gap-2 mb-4">
-                                <button id="save-recipe-btn" class="flex-1 bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold py-2 px-3 rounded-xl transition shadow-lg shadow-teal-200" onclick="saveGeneratedRecipe()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                                    </svg>
-                                    Save Recipe
-                                </button>
-                                <button id="schedule-recipe-btn" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white text-sm font-bold py-2 px-3 rounded-xl transition" onclick="showScheduleRecipeModal()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                                    </svg>
-                                    Schedule
-                                </button>
-                            </div>
-                            <div class="flex gap-2 mb-4">
-                                <button id="add-missing-to-shopping-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold py-2 px-3 rounded-xl transition" onclick="addMissingToShoppingList()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                                    </svg>
-                                    Add Missing → Shopping
-                                </button>
-                                <button id="deduct-inventory-btn" class="flex-1 bg-red-400 hover:bg-red-500 text-white text-sm font-bold py-2 px-3 rounded-xl transition" onclick="deductInventory()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                                    </svg>
-                                    Mark as Made & Deduct
-                                </button>
-                            </div>
-
-                            <pre id="recipe-output" class="recipe-content-pre"></pre>
-                            <div id="recipe-sources" class="text-xs text-gray-500 mt-2"></div>
-                            
-                            <button class="text-indigo-500 hover:text-indigo-700 text-sm mt-3 font-semibold" onclick="renderGeneratedRecipesList()">← Back to List</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Saved Recipes Section (Collapsible) -->
-                    <details class="mt-6 pt-6 border-t-2 border-gray-300">
-                        <summary class="text-xl font-semibold text-gray-700 cursor-pointer hover:text-indigo-600 transition flex items-center justify-between">
-                            <span>📚 My Saved Recipes</span>
-                            <span id="saved-recipe-count-inline" class="text-sm font-normal text-gray-500">(0 recipes)</span>
-                        </summary>
-                        <div class="mt-4 space-y-4">
-                            <div id="saved-recipes-list" class="space-y-3">
-                                <p class="text-gray-500" id="saved-recipes-placeholder">You haven't saved any recipes yet. Generate one!</p>
-                                <!-- Saved recipe titles rendered here -->
-                            </div>
-
-                            <div id="selected-recipe-view" class="mt-6 pt-4 border-t border-gray-100 hidden">
-                                <h3 id="selected-recipe-title" class="text-xl font-bold text-teal-600 mb-2"></h3>
-                                <pre id="selected-recipe-content" class="recipe-content-pre"></pre>
-                                <div class="flex justify-end gap-3 mt-3">
-                                    <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-indigo-200 text-sm" onclick="scheduleFromSavedRecipe(window.selectedSavedRecipeId)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                                        </svg>
-                                        Add to Schedule
+                        
+                        <!-- Delete Controls -->
+                        <div id="delete-controls" class="block" style="display: none;">
+                            <div class="row">
+                                <div class="col-50">
+                                    <button class="button[disabled]" onclick="window.deleteSelectedItems()">
+                                        <img src="img/delete.jpg" alt="Delete">
                                     </button>
-                                    <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-red-200 text-sm" onclick="deleteSavedRecipe(window.selectedSavedRecipeId)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" />
-                                        </svg>
-                                        Delete Recipe
+                                </div>
+                                <div class="col-50">
+                                    <button class="button" onclick="window.removeAllItems()">
+                                        <img src="img/removeall.jpg" alt="Clear All">
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </details>
+                    </div>
+                    
+                    <!-- Recipes Tab -->
+                    <div id="tab-recipes" class="tab page-content">
+                        <div class="block-title">Recipe Search</div>
+                        <div class="card">
+                            <div class="card-content card-content-padding">
+                                <div class="list no-hairlines-md">
+                                    <ul>
+                                        <li class="item-content item-input">
+                                            <div class="item-inner">
+                                                <div class="item-input-wrap">
+                                                    <input type="text" id="recipe-search-input" placeholder="Search for recipes...">
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <button class="button button-fill" onclick="searchRecipes()">
+                                    <img src="img/searchforrecipe.jpg" alt="Search Recipes">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="block-title">Generate from Inventory</div>
+                        <div class="card">
+                            <div class="card-content card-content-padding">
+                                <div class="list no-hairlines-md">
+                                    <ul>
+                                        <li class="item-content item-input">
+                                            <div class="item-inner">
+                                                <div class="item-title item-label">Max Cook Time</div>
+                                                <div class="item-input-wrap">
+                                                    <input type="number" id="max-cook-time" value="60" min="10" max="240">
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="item-content item-input">
+                                            <div class="item-inner">
+                                                <div class="item-title item-label">Max Ingredients</div>
+                                                <div class="item-input-wrap">
+                                                    <input type="number" id="max-ingredients" value="10" min="3" max="20">
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <label class="item-checkbox item-content">
+                                                <input type="checkbox" id="allow-missing-ingredients">
+                                                <i class="icon icon-checkbox"></i>
+                                                <div class="item-inner">
+                                                    <div class="item-title">Allow missing ingredients</div>
+                                                </div>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="segmented segmented-strong">
+                                    <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')"><img src="img/metric.jpg" alt="Metric"></button>
+                                    <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')"><img src="img/standard.jpg" alt="Standard"></button>
+                                </div>
+                                <button id="generate-recipe-btn" class="button button-fill button-large" onclick="generateRecipes()" style="margin-top: 16px;">
+                                    <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes">
+                                </button>
+                                <div id="recipe-generation-status" style="display: none; margin-top: 16px; text-align: center;">
+                                    <div class="preloader"></div>
+                                    <p style="margin-top: 8px; color: #6366f1;">Consulting the Smart Chef...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recipe Results -->
+                        <div id="recipe-list-view" class="list media-list" style="margin-top: 16px;"></div>
+                        <div id="recipe-detail-view" style="display: none;"></div>
+                        
+                        <!-- Saved Recipes -->
+                        <div class="block-title">Saved Recipes</div>
+                        <div id="saved-recipes-list" class="list media-list"></div>
+                    </div>
+                    
+                    <!-- Schedule Tab -->
+                    <div id="tab-schedule" class="tab page-content">
+                        <div class="block-title">Meal Schedule</div>
+                        <div id="calendar-container"></div>
+                    </div>
+                    
+                    <!-- Shopping Tab -->
+                    <div id="tab-shopping" class="tab page-content">
+                        <div class="block-title">Shopping List</div>
+                        <div class="list no-hairlines-md">
+                            <ul>
+                                <li class="item-content item-input">
+                                    <div class="item-inner">
+                                        <div class="item-input-wrap">
+                                            <input type="text" id="shopping-item-input" placeholder="Add item...">
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="block">
+                            <button class="button button-fill" onclick="addShoppingItem()">
+                                <img src="img/addtolist.jpg" alt="Add Item">
+                            </button>
+                        </div>
+                        <div id="shopping-list" class="list"></div>
+                    </div>
                 </div>
             </div>
-
-            <!-- Hidden Saved Recipes Tab (keep for compatibility) -->
-            <div id="saved" class="tab-content hidden">
-                <div class="card space-y-4">
-                    <p class="text-gray-500 text-sm">Saved recipes have been moved to the Recipes tab. Please use that tab instead.</p>
-                </div>
-            </div>
-
-        </main>
-
-        <footer class="text-center text-xs text-gray-400 py-4 mt-auto border-t border-gray-100">
-            Data powered by Firebase Firestore and Gemini API
-        </footer>
+        </div>
+        
+        <!-- Popups and Sheets will be added here -->
     </div>
+
+    <!-- Framework7 Library -->
+    <script src="https://cdn.jsdelivr.net/npm/framework7@8/framework7-bundle.min.js"></script>
     
-    <!-- Loading Overlay (shown until Firebase connects) -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
-        <div class="text-center">
-            <div class="spinner mb-4"></div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Smart Pantry Chef</h2>
-            <p class="text-gray-600">Connecting to Firebase...</p>
-        </div>
-    </div>
-
-    <!-- Item Name/Quantity Edit Modal -->
-    <div id="item-edit-modal" class="modal-overlay hidden" onclick="if(event.target.id === 'item-edit-modal') hideEditItemNameModal()">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Edit Item Name/Quantity</h3>
-            <p class="text-sm text-gray-500 mb-3">Adjust the quantity by editing the name string (e.g., change '2 cans of beans' to '3 cans of beans').</p>
-            
-            <label for="modal-item-name-input" class="block text-sm font-medium text-gray-700 mb-2">Item Name / Quantity:</label>
-            <input type="text" id="modal-item-name-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4">
-            
-            <input type="hidden" id="modal-item-identifier-name-edit"> 
-
-            <div class="flex justify-end space-x-3">
-                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition" onclick="hideEditItemNameModal()">Cancel</button>
-                <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition" onclick="saveItemNameEdit()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Expiry Date Edit Modal -->
-    <div id="expiry-edit-modal" class="modal-overlay hidden" onclick="if(event.target.id === 'expiry-edit-modal') hideEditExpiryModal()">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Set Expiration Date</h3>
-            <p id="modal-item-name-expiry" class="text-lg font-semibold text-teal-600 mb-3"></p>
-            
-            <label for="modal-expiry-date" class="block text-sm font-medium text-gray-700 mb-2">Select Expiration Date:</label>
-            <input type="date" id="modal-expiry-date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4">
-            
-            <input type="hidden" id="modal-item-identifier-expiry"> 
-
-            <div class="flex justify-end space-x-3">
-                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition" onclick="hideEditExpiryModal()">Cancel</button>
-                <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl transition" onclick="saveExpiry()">Save Date</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Schedule Recipe Modal -->
-    <div id="schedule-recipe-modal" class="modal-overlay hidden" onclick="if(event.target.id === 'schedule-recipe-modal') hideScheduleRecipeModal()">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Schedule Recipe</h3>
-            <p id="schedule-recipe-title" class="text-lg font-semibold text-purple-600 mb-3"></p>
-            
-            <label for="schedule-date-picker" class="block text-sm font-medium text-gray-700 mb-2">Choose a date:</label>
-            <input type="date" id="schedule-date-picker" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 mb-4">
-
-            <div class="flex justify-end space-x-3">
-                <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-xl transition" onclick="hideScheduleRecipeModal()">Cancel</button>
-                <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-xl transition" onclick="confirmScheduleRecipe()">Schedule</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Firebase/Firestore SDKs -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, onSnapshot, collection, query, addDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
-        // Global state and configuration
+        // Initialize Framework7
+        const app = new Framework7({
+            el: '#app',
+            name: 'Smart Pantry Chef',
+            theme: 'auto',
+            colors: {
+                primary: '#6366f1',
+            }
+        });
+
+        // Global state
         window.currentUserId = null;
-        // window.inventory holds objects: [{id: 'abc', name: 'Milk', expiry: '2025-10-20'}, ...]\
-        window.inventory = []; 
+        window.inventory = [];
         window.savedRecipes = [];
-        // Shopping list items: [{id, name}]
         window.shoppingList = [];
-        // Set of selected inventory item IDs for deletion/highlight
         window.selectedInventoryIds = new Set();
-        // NEW: Stores the 3 generated recipes as structured objects
-        window.latestGeneratedRecipes = []; 
-        window.selectedGeneratedRecipeIndex = null;
-        window.selectedSavedRecipeId = null;
+        window.latestGeneratedRecipes = [];
+        window.mealSchedule = {};
         window.units = 'metric';
         window.db = null;
         window.auth = null;
         window.functions = null;
         window.callGemini = null;
+        window.latestImageBase64 = null;
+        window.f7 = app;
 
-         setLogLevel('Debug'); // Uncomment this for detailed Firebase logging
+        const appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f';
+        const GEMINI_VISION_MODEL = "gemini-2.0-flash-exp";
+        const GEMINI_TEXT_MODEL = "gemini-2.0-flash-exp";
 
-        // ====================================================================================
-        // === CRITICAL: API & FIREBASE CONFIGURATION (FOR STANDALONE/APK) ====================\
-        // === YOU MUST REPLACE THE PLACEHOLDERS BELOW WITH YOUR ACTUAL KEYS BEFORE COMPILING ===
-        // ====================================================================================
-        
-        // 1. App ID for Firestore path (can be left as-is if you don't change it)
-        window.appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f'; 
-        
-        // 2. YOUR FIREBASE CONFIGURATION OBJECT - REPLACE ALL 'YOUR_PROJECT_ID' AND 'YOUR_FIREBASE_API_KEY'
         const firebaseConfig = {
             apiKey: "AIzaSyCVlMsqNsW63L4m_u72Sv6WBFlw_pjUYpg",
             authDomain: "gen-lang-client-0381888356.firebaseapp.com",
             projectId: "gen-lang-client-0381888356",
             storageBucket: "gen-lang-client-0381888356.appspot.com",
             messagingSenderId: "89889306830",
-            appId: "1:89889306830:web:be0e6e5b707e2ba89ef89f"// (Optional, but recommended to match your config)
-        // ====================================================================================
+            appId: "1:89889306830:web:be0e6e5b707e2ba89ef89f"
         };
-                
-        const userInfoEl = document.getElementById('user-info');
-        
-        // Disable tab navigation until Firebase is ready
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        });
-        
-        // --- FIRESTORE INITIALIZATION AND AUTHENTICATION ---
+
+        // Initialize Firebase
         try {
-            const app = initializeApp(firebaseConfig);
-            window.db = getFirestore(app);
-            window.auth = getAuth(app);
-            window.functions = getFunctions(app);
+            const firebaseApp = initializeApp(firebaseConfig);
+            window.db = getFirestore(firebaseApp);
+            window.auth = getAuth(firebaseApp);
+            window.functions = getFunctions(firebaseApp);
             window.callGemini = httpsCallable(window.functions, 'callGemini');
-            
+
             onAuthStateChanged(window.auth, async (user) => {
                 if (user) {
                     window.currentUserId = user.uid;
-                    userInfoEl.textContent = `User ID: ${user.uid.substring(0, 8)}... (Connected)`;
                     setupInventoryListener();
                     setupSavedRecipeListener();
                     setupShoppingListListener();
                     setupMealScheduleListener();
-                    // Enable tabs and hide loading screen
-                    document.querySelectorAll('.tab-button').forEach(btn => {
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                        btn.style.cursor = 'pointer';
-                    });
-                    const loadingOverlay = document.getElementById('loading-overlay');
-                    if (loadingOverlay) {
-                        loadingOverlay.style.transition = 'opacity 0.5s ease-out';
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => loadingOverlay.remove(), 500);
-                    }
                 } else {
-                    try {
-                        const { user: anonUser } = await signInAnonymously(window.auth);
-                        window.currentUserId = anonUser.uid;
-                        userInfoEl.textContent = `User ID: ${anonUser.uid.substring(0, 8)}... (Connected)`;
-                        setupInventoryListener();
-                        setupSavedRecipeListener();
-                        setupShoppingListListener();
-                        setupMealScheduleListener();
-                        // Enable tabs and hide loading screen
-                        document.querySelectorAll('.tab-button').forEach(btn => {
-                            btn.disabled = false;
-                            btn.style.opacity = '1';
-                            btn.style.cursor = 'pointer';
-                        });
-                        const loadingOverlay = document.getElementById('loading-overlay');
-                        if (loadingOverlay) {
-                            loadingOverlay.style.transition = 'opacity 0.5s ease-out';
-                            loadingOverlay.style.opacity = '0';
-                            setTimeout(() => loadingOverlay.remove(), 500);
-                        }
-                    } catch (e) {
-                        console.error("FIREBASE INITIALIZATION FAILED:", e);
-                        userInfoEl.innerHTML = `<span class="text-red-500 font-bold">Authentication Failed! (Code: ${e.code || 'N/A'}). Please check your configuration keys in the script block and network connection.</span>`;
-                    }
+                    const { user: anonUser } = await signInAnonymously(window.auth);
+                    window.currentUserId = anonUser.uid;
+                    setupInventoryListener();
+                    setupSavedRecipeListener();
+                    setupShoppingListListener();
+                    setupMealScheduleListener();
                 }
             });
-
-
         } catch (e) {
-            console.error("FIREBASE INITIALIZATION FAILED:", e);
-            userInfoEl.innerHTML = `<span class="text-red-500 font-bold">Authentication Failed! (Code: ${e.code || 'N/A'}). Please check your configuration keys in the script block and network connection.</span>`;
-            // Show error on loading overlay
-            const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) {
-                loadingOverlay.innerHTML = `
-                    <div class="text-center p-8">
-                        <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <h2 class="text-2xl font-bold text-red-600 mb-2">Connection Failed</h2>
-                        <p class="text-gray-700 mb-4">Unable to connect to Firebase.</p>
-                        <p class="text-sm text-gray-600">Error: ${e.code || 'Unknown'}</p>
-                        <button onclick="location.reload()" class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-xl transition">Retry</button>
-                    </div>
-                `;
-            }
+            console.error("Firebase initialization failed:", e);
+            app.dialog.alert('Failed to connect to Firebase: ' + e.message, 'Connection Error');
         }
 
-
-        // --- FIRESTORE LISTENERS ---
-        
-        function setupInventoryListener() {
-            if (!window.currentUserId || !window.db) return;
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
-            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
-
-            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
-                console.log('[Inventory Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const items = Array.isArray(data.items) ? data.items.map(item => ({ 
-                        id: item.id || null,
-                        name: item.name,
-                        expiry: item.expiry || null
-                    })) : [];
-                    // Migrate any items missing IDs to ensure UI actions work reliably
-                    const needsMigration = items.some(i => !i.id);
-                    if (needsMigration) {
-                        const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-                        const upgraded = items.map(i => ({ id: i.id || genId(), name: i.name, expiry: i.expiry || null }));
-                        window.inventory = upgraded;
-                        setDoc(inventoryDocRef, { items: upgraded }).catch(err => console.error('Migration save failed:', err));
-                    } else {
-                        window.inventory = items;
-                    }
-                    console.log('[Inventory Snapshot] Updated to', items.length, 'items:', items.map(i => i.name).join(', '));
-                } else {
-                    window.inventory = [];
-                    console.log('[Inventory Snapshot] Document does not exist, cleared inventory');
-                }
-                
-                // Force immediate re-render on every snapshot update
-                if (window.renderInventory) {
-                    window.renderInventory();
-                    console.log('[Inventory Snapshot] Render completed');
-                }
-                
-            }, (error) => {
-                console.error("FIREBASE ERROR: Inventory Snapshot failed (Check security rules).", error);
-            });
-        }
-
-        // Shopping list listener and CRUD
-        function setupShoppingListListener() {
-            if (!window.currentUserId || !window.db) return;
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
-            const listDocRef = doc(window.db, docPath, 'list');
-
-            onSnapshot(listDocRef, { includeMetadataChanges: true }, (docSnap) => {
-                console.log('[Shopping List Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    window.shoppingList = Array.isArray(data.items) ? data.items.map(i => ({ id: i.id || null, name: i.name })) : [];
-                    console.log('[Shopping List Snapshot] Updated to', window.shoppingList.length, 'items:', window.shoppingList.map(i => i.name).join(', '));
-                } else {
-                    window.shoppingList = [];
-                    console.log('[Shopping List Snapshot] Document does not exist, cleared list');
-                }
-                window.renderShoppingList && window.renderShoppingList();
-                console.log('[Shopping List Snapshot] Render completed');
-            }, (error) => {
-                console.error('FIREBASE ERROR: Shopping List Snapshot failed.', error);
-            });
-        }
-
-        window.saveShoppingListToDb = async (newList) => {
-            if (!window.currentUserId || !window.db) return console.error('FIREBASE ERROR: Not ready (saveShoppingListToDb).');
-            console.log('[saveShoppingListToDb] Saving', newList.length, 'items:', newList.map(i => i.name).join(', '));
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
-            const listDocRef = doc(window.db, docPath, 'list');
-            try {
-                await setDoc(listDocRef, { items: newList });
-                console.log('[saveShoppingListToDb] Successfully wrote to Firestore');
-                // Snapshot listener will trigger automatic re-render
-            } catch (e) {
-                console.error('FIREBASE ERROR: Saving shopping list failed:', e);
-            }
-        };
-
-        function setupMealScheduleListener() {
-            if (!window.currentUserId || !window.db) {
-                console.error('[Meal Schedule Listener] Cannot setup: userId=', window.currentUserId, 'db available=', !!window.db);
-                return;
-            }
-            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
-            const inventoryDocRef = doc(window.db, `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
-            console.log('[Meal Schedule Listener] Setting up listener for path:', scheduleCollectionPath);
-
-            onSnapshot(scheduleDocRef, { includeMetadataChanges: true }, async (docSnap) => {
-                console.log('[Meal Schedule Snapshot] Received update, fromCache:', docSnap.metadata.fromCache, 'hasPendingWrites:', docSnap.metadata.hasPendingWrites);
-                console.log('[Meal Schedule Snapshot] Document exists:', docSnap.exists());
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    console.log('[Meal Schedule Snapshot] Raw data:', JSON.stringify(data, null, 2));
-                    window.mealSchedule = data.schedule || {};
-                    console.log('[Meal Schedule Snapshot] ✅ Updated to', Object.keys(window.mealSchedule).length, 'scheduled meals');
-                } else {
-                    // Fallback: attempt to load schedule stored inside inventory doc
-                    try {
-                        const invSnap = await getDoc(inventoryDocRef);
-                        if (invSnap.exists() && invSnap.data().schedule) {
-                            window.mealSchedule = invSnap.data().schedule || {};
-                            console.log('[Meal Schedule Snapshot] Fallback loaded from inventory doc. Meals:', Object.keys(window.mealSchedule).length);
-                        } else {
-                            window.mealSchedule = {};
-                            console.log('[Meal Schedule Snapshot] Document does not exist, cleared schedule (no fallback)');
-                        }
-                    } catch (e) {
-                        console.error('[Meal Schedule Snapshot] Fallback read failed:', e);
-                        window.mealSchedule = {};
-                    }
-                }
-                if (window.renderSchedule) {
-                    window.renderSchedule();
-                    console.log('[Meal Schedule Snapshot] Render completed');
-                }
-            }, (error) => {
-                console.error("FIREBASE ERROR: Meal Schedule Snapshot failed (Check security rules).", error);
-                console.error("Error details:", error.message, error.code);
-            });
-        }
-
-        function setupSavedRecipeListener() {
-            if (!window.currentUserId || !window.db) return;
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
-            const savedRecipesCollectionRef = collection(window.db, collectionPath);
-            const savedRecipesQuery = query(savedRecipesCollectionRef);
-            
-            onSnapshot(savedRecipesQuery, (querySnapshot) => {
-                window.savedRecipes = [];
-                querySnapshot.forEach((doc) => {
-                    window.savedRecipes.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Always call renderSavedRecipes() when data changes
-                window.renderSavedRecipes();
-                
-            }, (error) => {
-                console.error("FIREBASE ERROR: Recipes Snapshot failed.", error);
-            });
-        }
-
-
-        // --- FIRESTORE CRUD OPERATIONS ---
-
-        window.appendItemsToInventory = async (itemsArray) => {
-            if (!window.currentUserId || !window.db || itemsArray.length === 0) {
-                 console.error("FIREBASE ERROR: Cannot append items. User not authenticated or window.db not initialized.");
-                 return;
-            }
-            console.log('[appendItemsToInventory] Adding', itemsArray.length, 'items:', itemsArray.map(i => i.name).join(', '));
-
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
-            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
-
-            try {
-                await updateDoc(inventoryDocRef, {
-                    items: arrayUnion(...itemsArray)
-                });
-                console.log('[appendItemsToInventory] Successfully wrote to Firestore');
-                // Snapshot listener will trigger automatic re-render
-                
-            } catch (e) {
-                if (e.code === 'not-found') {
-                    console.log("Inventory document not found, creating it with initial items.");
-                    await setDoc(inventoryDocRef, { items: itemsArray });
-                } else {
-                    console.error("FIREBASE ERROR: Error appending inventory items: ", e);
-                }
-            }
-        };
-
-        // Overwrite function (used for deletion, modification, and initial creation)
-        window.saveInventoryToDb = async (newInventory) => {
-            if (!window.currentUserId || !window.db) return console.error("FIREBASE ERROR: User not authenticated or window.db not initialized (saveInventoryToDb).");
-            console.log('[saveInventoryToDb] Saving', newInventory.length, 'items');
-
-            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
-            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
-
-            try {
-                await setDoc(inventoryDocRef, { items: newInventory });
-                console.log('[saveInventoryToDb] Successfully wrote to Firestore');
-                // Snapshot listener will trigger automatic re-render
-            } catch (e) {
-                console.error("FIREBASE ERROR: Error saving inventory to Firestore: ", e);
-            }
-        };
-
-        window.deleteSavedRecipe = async (recipeId) => {
-            if (!window.currentUserId || !recipeId || !window.db) return;
-
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
-            const recipeDocRef = doc(window.db, collectionPath, recipeId);
-
-            try {
-                await deleteDoc(recipeDocRef);
-                window.selectedSavedRecipeId = null;
-            } catch (e) {
-                console.error("FIREBASE ERROR: Error deleting document from Firestore: ", e);
-            }
-        };
-
-        window.saveGeneratedRecipeToDb = async (title, content) => {
-            if (!window.currentUserId || !window.db) return false;
-
-            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
-            const recipesCollectionRef = collection(window.db, collectionPath);
-            
-            try {
-                await addDoc(recipesCollectionRef, {
-                    title: title,
-                    content: content,
-                    createdAt: new Date().toISOString()
-                });
-                return true;
-            } catch (e) {
-                console.error("FIREBASE ERROR: Error saving recipe to Firestore: ", e);
-                return false;
-            }
-        };
-
-    </script>
-
-    <script>
-        // --- GLOBAL STATE & VIEW MANAGEMENT ---
-        window.activeTab = 'inventory';
-        window.latestImageBase64 = null;
-        window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
-        
-        const GEMINI_VISION_MODEL = "gemini-2.5-pro";
-        const GEMINI_TEXT_MODEL = "gemini-2.5-pro";
-        
-        // --- DEBUG FUNCTIONS ---
-        
-        window.debugGeminiConfig = async () => {
-            console.log('=== GEMINI API DEBUG ===');
-            console.log('Firebase Functions available:', !!window.callGemini);
-            console.log('Current User ID:', window.currentUserId);
-            console.log('Vision Model:', GEMINI_VISION_MODEL);
-            console.log('Text Model:', GEMINI_TEXT_MODEL);
-            
-            const statusEl = document.getElementById('gemini-status');
-            
-            if (!window.callGemini) {
-                console.error('❌ window.callGemini is not initialized');
-                alert('Error: Cloud Function not initialized. Check console for details.');
-                return;
-            }
-            
-            try {
-                statusEl.textContent = '🔍 Testing API key...';
-                statusEl.className = 'text-xs text-blue-600 mt-1';
-                
-                const testPayload = {
-                    modelName: GEMINI_TEXT_MODEL,
-                    contents: [{ parts: [{ text: "Reply with exactly: API_KEY_WORKS" }] }],
-                    generationConfig: { temperature: 0, maxOutputTokens: 20 }
-                };
-                
-                console.log('Sending test request:', testPayload);
-                const result = await window.callGemini(testPayload);
-                console.log('Full response:', result);
-                
-                const response = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                console.log('Extracted text:', response);
-                
-                if (response) {
-                    statusEl.textContent = '✅ API Key Valid - Response: ' + response;
-                    statusEl.className = 'text-xs text-green-600 mt-1';
-                    alert('✅ Gemini API Key is working!\n\nResponse: ' + response + '\n\nCheck console for full details.');
-                } else {
-                    console.warn('⚠️ Empty response from API');
-                    statusEl.textContent = '⚠️ API returned empty response';
-                    statusEl.className = 'text-xs text-yellow-600 mt-1';
-                    alert('⚠️ API responded but returned no content. Check console for details.');
-                }
-            } catch (error) {
-                console.error('❌ Gemini API Test Failed:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    code: error.code,
-                    details: error.details,
-                    stack: error.stack
-                });
-                statusEl.textContent = '❌ API Key Test Failed';
-                statusEl.className = 'text-xs text-red-600 mt-1';
-                alert('❌ Gemini API Test Failed!\n\nError: ' + error.message + '\n\nCheck console (F12) for full error details.');
-            }
-        };
-        
-        // --- HELPER FUNCTIONS ---
-        
+        // Helper functions
         const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+        const normalizeItemName = (name) => name.toLowerCase().trim();
+
+        window.mergeDuplicateItems = (items) => {
+            const itemMap = new Map();
+            items.forEach(item => {
+                const normalizedName = normalizeItemName(item.name);
+                if (itemMap.has(normalizedName)) {
+                    const existing = itemMap.get(normalizedName);
+                    existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+                    if (item.expiry && existing.expiry) {
+                        existing.expiry = new Date(item.expiry) < new Date(existing.expiry) ? item.expiry : existing.expiry;
+                    } else if (item.expiry && !existing.expiry) {
+                        existing.expiry = item.expiry;
+                    }
+                } else {
+                    itemMap.set(normalizedName, {
+                        id: item.id || generateId(),
+                        name: item.name,
+                        expiry: item.expiry || null,
+                        quantity: item.quantity || 1
+                    });
+                }
+            });
+            return Array.from(itemMap.values());
+        };
 
         function getDateDifferenceInDays(dateString) {
             if (!dateString) return Infinity;
@@ -955,117 +524,20 @@
             return getDateDifferenceInDays(dateString) <= 0;
         }
 
-        const switchTab = (tabName) => {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-button').forEach(el => {
-                el.classList.remove('tab-active');
-                el.classList.add('tab-inactive');
-            });
-
-            document.getElementById(tabName).classList.remove('hidden');
-            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('tab-active');
-            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.remove('tab-inactive');
-            window.activeTab = tabName;
-
-            if (tabName === 'inventory') { window.renderInventory(); }
-            if (tabName === 'shopping') { window.renderShoppingList && window.renderShoppingList(); }
-            if (tabName === 'schedule') { window.renderSchedule && window.renderSchedule(); }
-        };
-
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
-        });
-        
-        window.toggleUnits = (unit) => {
-            window.units = unit;
-            const metricBtn = document.getElementById('unit-metric-btn');
-            const standardBtn = document.getElementById('unit-standard-btn');
-
-            if (unit === 'metric') {
-                metricBtn.classList.add('bg-indigo-500', 'text-white');
-                metricBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
-                standardBtn.classList.remove('bg-indigo-500', 'text-white');
-                standardBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
-            } else {
-                standardBtn.classList.add('bg-indigo-500', 'text-white');
-                standardBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-50');
-                metricBtn.classList.remove('bg-indigo-500', 'text-white');
-                metricBtn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-50');
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            switchTab(window.activeTab);
-            window.toggleUnits(window.units || 'metric');
-        });
-        
-        // --- INVENTORY RENDER & CRUD ---
-        // Image mapping helper for inventory thumbnails
         function getItemImage(name) {
             if (!name) return 'img/placeholder.svg';
             const n = name.toLowerCase();
             const map = [
-                // Dairy & staples
                 { keys: ['milk','whole milk','skim','dairy'], img: 'milk' },
                 { keys: ['egg','eggs'], img: 'eggs' },
                 { keys: ['cheese','cheddar','mozzarella','gouda'], img: 'cheese' },
-                { keys: ['parmesan','parmesan cheese','grated parmesan','parm'], img: 'parmesan' },
-                { keys: ['whipped cream','whipped-cream','cream'], img: 'whipped-cream' },
-                // Produce
-                { keys: ['almond butter','almond-butter'], img: 'almond-butter' },
                 { keys: ['apple','apples'], img: 'apple' },
-                { keys: ['artichoke','artichokes'], img: 'artichoke' },
-                { keys: ['avocado','avocados'], img: 'avocado' },
                 { keys: ['banana','bananas'], img: 'banana' },
-                { keys: ['beet','beets'], img: 'beet' },
-                { keys: ['broccoli'], img: 'broccoli' },
-                { keys: ['cabbage'], img: 'cabbage' },
-                { keys: ['carrot','carrots'], img: 'carrot' },
-                { keys: ['cherry','cherries'], img: 'cherry' },
-                { keys: ['chilis','chili pepper','chili peppers'], img: 'chili-pepper' },
-                { keys: ['coconut','coconuts'], img: 'coconut' },
-                { keys: ['corn','ear of corn'], img: 'corn' },
-                { keys: ['eggplant','aubergine'], img: 'eggplant' },
-                { keys: ['garlic'], img: 'garlic' },
-                { keys: ['grape','grapes'], img: 'grapes' },
-                { keys: ['green bean','green beans'], img: 'green_beans' },
-                { keys: ['kiwi','kiwis'], img: 'kiwi' },
-                { keys: ['mango','mangoes'], img: 'mango' },
-                { keys: ['mushroom','mushrooms'], img: 'mushroom' },
-                { keys: ['olive','olives'], img: 'olive' },
-                { keys: ['onion','onions'], img: 'onion' },
-                { keys: ['orange','oranges'], img: 'orange' },
-                { keys: ['peach','peaches'], img: 'peach' },
-                { keys: ['peanut','peanuts'], img: 'peanuts' },
-                { keys: ['pear','pears'], img: 'pear' },
-                { keys: ['potato','potatoes'], img: 'potato' },
-                { keys: ['pumpkin','pumpkins'], img: 'pumpkin' },
-                { keys: ['raspberry','raspberries'], img: 'raspberry' },
-                { keys: ['spinach'], img: 'spinach' },
-                { keys: ['strawberry','strawberries','berry'], img: 'strawberry' },
-                { keys: ['tomato','tomatoes'], img: 'tomato' },
-                // Bakery & pantry
                 { keys: ['bread','loaf','baguette'], img: 'bread' },
-                { keys: ['chocolate','choco','cocoa'], img: 'chocolate-bar' },
-                { keys: ['cinnamon','cinnamon sticks'], img: 'cinnamon-sticks' },
-                { keys: ['coffee','coffeebeans','coffee beans'], img: 'coffee-beans' },
-                // Proteins
-                { keys: ['bacon','bacon strip','bacon strips'], img: 'bacon' },
                 { keys: ['chicken','drumstick','breast','thigh'], img: 'chicken' },
-                { keys: ['crab','crabs'], img: 'crab' },
-                { keys: ['ground beef','minced beef','beef mince','hamburger'], img: 'ground_beef' },
-                { keys: ['lobster','lobsters'], img: 'lobster' },
-                { keys: ['salami'], img: 'salami' },
-                { keys: ['salmon'], img: 'salmon' },
-                { keys: ['sausage','sausages','sausage links'], img: 'sausage' },
-                { keys: ['steak','ribeye','sirloin'], img: 'steak' },
-                // Condiments & spices
-                { keys: ['ketchup','catsup'], img: 'ketchup' },
-                { keys: ['mayonnaise','mayo'], img: 'mayonnaise' },
-                { keys: ['mustard'], img: 'mustard' },
-                { keys: ['pepper','black pepper'], img: 'pepper' },
-                { keys: ['salt'], img: 'salt' },
-                { keys: ['soy','soy sauce'], img: 'soy' }
+                { keys: ['tomato','tomatoes'], img: 'tomato' },
+                { keys: ['carrot','carrots'], img: 'carrot' },
+                { keys: ['potato','potatoes'], img: 'potato' },
             ];
             for (const entry of map) {
                 if (entry.keys.some(k => n.includes(k))) {
@@ -1074,94 +546,280 @@
             }
             return 'img/placeholder.svg';
         }
-        
+
+        // Firestore listeners
+        function setupInventoryListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            onSnapshot(inventoryDocRef, { includeMetadataChanges: true }, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let items = Array.isArray(data.items) ? data.items.map(item => ({
+                        id: item.id || null,
+                        name: item.name,
+                        expiry: item.expiry || null,
+                        quantity: item.quantity || 1
+                    })) : [];
+
+                    const needsMigration = items.some(i => !i.id);
+                    if (needsMigration) {
+                        items = items.map(i => ({ id: i.id || generateId(), name: i.name, expiry: i.expiry || null, quantity: i.quantity || 1 }));
+                    }
+
+                    const mergedItems = window.mergeDuplicateItems(items);
+                    const hasDuplicates = mergedItems.length < items.length;
+
+                    if (needsMigration || hasDuplicates) {
+                        window.inventory = mergedItems;
+                        setDoc(inventoryDocRef, { items: mergedItems }).catch(err => console.error('Migration/merge save failed:', err));
+                    } else {
+                        window.inventory = mergedItems;
+                    }
+                } else {
+                    window.inventory = [];
+                }
+                window.renderInventory();
+            });
+        }
+
+        function setupSavedRecipeListener() {
+            if (!window.currentUserId || !window.db) return;
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const savedRecipesCollectionRef = collection(window.db, collectionPath);
+            const savedRecipesQuery = query(savedRecipesCollectionRef);
+
+            onSnapshot(savedRecipesQuery, (querySnapshot) => {
+                window.savedRecipes = [];
+                querySnapshot.forEach((doc) => {
+                    window.savedRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                window.renderSavedRecipes();
+            });
+        }
+
+        function setupShoppingListListener() {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+
+            onSnapshot(listDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.shoppingList = Array.isArray(data.items) ? data.items.map(i => ({ id: i.id || null, name: i.name })) : [];
+                } else {
+                    window.shoppingList = [];
+                }
+                window.renderShoppingList();
+            });
+        }
+
+        function setupMealScheduleListener() {
+            if (!window.currentUserId || !window.db) return;
+            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+
+            onSnapshot(scheduleDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.mealSchedule = data.schedule || {};
+                } else {
+                    window.mealSchedule = {};
+                }
+                window.renderSchedule();
+            });
+        }
+
+        // Firestore CRUD
+        window.appendItemsToInventory = async (itemsArray) => {
+            if (!window.currentUserId || !window.db || itemsArray.length === 0) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+
+            try {
+                const docSnap = await getDoc(inventoryDocRef);
+                let currentItems = [];
+                if (docSnap.exists()) {
+                    currentItems = docSnap.data().items || [];
+                }
+                const combinedItems = [...currentItems, ...itemsArray];
+                const mergedItems = window.mergeDuplicateItems(combinedItems);
+                await setDoc(inventoryDocRef, { items: mergedItems });
+            } catch (e) {
+                if (e.code === 'not-found') {
+                    const mergedItems = window.mergeDuplicateItems(itemsArray);
+                    await setDoc(inventoryDocRef, { items: mergedItems });
+                } else {
+                    console.error("Error appending inventory items:", e);
+                }
+            }
+        };
+
+        window.saveInventoryToDb = async (newInventory) => {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/pantry_inventory`;
+            const inventoryDocRef = doc(window.db, docPath, "inventory_list");
+            try {
+                await setDoc(inventoryDocRef, { items: newInventory });
+            } catch (e) {
+                console.error("Error saving inventory:", e);
+            }
+        };
+
+        window.saveShoppingListToDb = async (newList) => {
+            if (!window.currentUserId || !window.db) return;
+            const docPath = `artifacts/${appId}/users/${window.currentUserId}/shopping_list`;
+            const listDocRef = doc(window.db, docPath, 'list');
+            try {
+                await setDoc(listDocRef, { items: newList });
+            } catch (e) {
+                console.error('Error saving shopping list:', e);
+            }
+        };
+
+        // Render functions
         window.renderInventory = () => {
             const listEl = document.getElementById('inventory-list');
             const countEl = document.getElementById('item-count');
             const placeholder = document.getElementById('inventory-placeholder');
             const deleteControls = document.getElementById('delete-controls');
-            
-            // Only skip if DOM elements truly don't exist (not loaded yet)
-            if (!listEl) {
-                console.warn('[renderInventory] Inventory list element not found in DOM yet');
-                return;
-            }
 
-            const indexedInventory = window.inventory.filter(item => item.id).map(item => ({ 
-                ...item, 
-                identifier: item.id 
-            }));
+            if (!listEl) return;
 
-            // Sort by expiry date (closest first)
-            const sortedInventory = indexedInventory.sort((a, b) => {
+            const sortedInventory = window.inventory.sort((a, b) => {
                 const aDays = getDateDifferenceInDays(a.expiry);
                 const bDays = getDateDifferenceInDays(b.expiry);
-
-                if (aDays !== bDays) {
-                    return aDays - bDays;
-                }
+                if (aDays !== bDays) return aDays - bDays;
                 return a.name.localeCompare(b.name);
             });
 
             listEl.innerHTML = '';
             if (countEl) countEl.textContent = `(${window.inventory.length} items)`;
-            if (placeholder) placeholder.classList.toggle('hidden', window.inventory.length > 0);
-            const hasItems = window.inventory.length > 0;
-            if (deleteControls) deleteControls.classList.toggle('hidden', !hasItems);
+            if (placeholder) placeholder.style.display = window.inventory.length > 0 ? 'none' : 'block';
+            if (deleteControls) deleteControls.style.display = window.inventory.length > 0 ? 'block' : 'none';
 
-            sortedInventory.forEach((itemObj) => {
-                const isExpiringSoon = itemObj.expiry && isWithinDays(itemObj.expiry, 3);
-                const isExpired = itemObj.expiry && isExpiredToday(itemObj.expiry);
-                
-                let colorClass = 'bg-gray-50 border-gray-100';
+            sortedInventory.forEach((item) => {
+                const isExpired = item.expiry && isExpiredToday(item.expiry);
+                const isExpiringSoon = item.expiry && isWithinDays(item.expiry, 3);
+                const selected = window.selectedInventoryIds.has(item.id);
+
                 let expiryText = '';
+                let itemClass = '';
 
                 if (isExpired) {
-                    colorClass = 'bg-red-100 border-red-300';
-                    expiryText = `<span class="text-red-600 font-bold mr-2">! EXPIRED</span>`;
+                    expiryText = '<span style="color: #dc2626; font-weight: bold;">EXPIRED</span>';
+                    itemClass = 'expired-item';
                 } else if (isExpiringSoon) {
-                    colorClass = 'bg-yellow-100 border-yellow-300';
-                    expiryText = `<span class="text-yellow-600 font-bold mr-2">⚠︎ Expires in ${getDateDifferenceInDays(itemObj.expiry)} days</span>`;
-                } else if (itemObj.expiry) {
-                    expiryText = `<span class="text-green-600 font-medium mr-2">✓ Until ${itemObj.expiry}</span>`;
-                } else {
-                    expiryText = `<span class="text-gray-500 font-medium mr-2">No Date Set</span>`;
+                    expiryText = `<span style="color: #f59e0b; font-weight: bold;">Expires in ${getDateDifferenceInDays(item.expiry)} days</span>`;
+                    itemClass = 'expiring-soon-item';
+                } else if (item.expiry) {
+                    expiryText = `<span style="color: #10b981;">Until ${item.expiry}</span>`;
                 }
-                
-                const clickIdentifier = itemObj.identifier;
-                
-                const selected = window.selectedInventoryIds.has(clickIdentifier);
-                const selectionClasses = selected ? 'bg-red-50 border-red-400 ring-2 ring-red-300' : colorClass;
-                const itemEl = document.createElement('div');
-                itemEl.className = `group relative p-2 rounded-lg border cursor-pointer transition ${selectionClasses}`;
-                itemEl.onclick = () => toggleInventorySelection(clickIdentifier);
-                itemEl.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-md bg-white overflow-hidden border border-gray-200">
-                            <img src="${getItemImage(itemObj.name)}" alt="${itemObj.name}" class="w-10 h-10 object-contain" loading="lazy"/>
+
+                const li = document.createElement('li');
+                li.className = itemClass;
+                li.innerHTML = `
+                    <label class="item-checkbox item-content">
+                        <input type="checkbox" ${selected ? 'checked' : ''} onchange="window.toggleInventorySelection('${item.id}')">
+                        <i class="icon icon-checkbox"></i>
+                        <div class="item-media">
+                            <div class="item-thumbnail">
+                                <img src="${getItemImage(item.name)}" alt="${item.name}">
+                            </div>
                         </div>
-                        <div class="flex flex-col flex-grow min-w-0">
-                            <span class="text-gray-700 font-medium text-sm truncate">${itemObj.name}</span>
-                            <div class="text-[10px] mt-1">${expiryText}</div>
+                        <div class="item-inner">
+                            <div class="item-title-row">
+                                <div class="item-title">${item.name}</div>
+                            </div>
+                            <div class="item-subtitle">${expiryText || 'No expiry set'}</div>
+                            <div class="item-text" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                <div class="quantity-controls">
+                                    <a class="quantity-btn" onclick="event.preventDefault(); event.stopPropagation(); window.adjustQuantity('${item.id}', -1)"><img src="img/quantity-btn-down.jpg" alt="Decrease quantity"></a>
+                                    <span class="quantity-value">${item.quantity || 1}</span>
+                                    <a class="quantity-btn" onclick="event.preventDefault(); event.stopPropagation(); window.adjustQuantity('${item.id}', 1)"><img src="img/quantity-btn-up.jpg" alt="Increase quantity"></a>
+                                </div>
+                                <a class="button button-small button-outline" onclick="event.preventDefault(); event.stopPropagation(); window.showEditItemNameModal('${item.id}')"><img src="img/edit.jpg" alt="Edit"></a>
+                                <a class="button button-small button-outline" onclick="event.preventDefault(); event.stopPropagation(); window.showEditExpiryModal('${item.id}', '${item.name}')"><img src="img/date.jpg" alt="Date"></a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                        <button class="text-indigo-500 hover:text-indigo-700 text-[10px] font-semibold px-1" onclick="event.stopPropagation();showEditItemNameModal('${clickIdentifier}')">Edit</button>
-                        <button class="text-indigo-500 hover:text-indigo-700 text-[10px] font-semibold px-1" onclick="event.stopPropagation();showEditExpiryModal('${clickIdentifier}', '${itemObj.name}')">Date</button>
-                    </div>
+                    </label>
                 `;
-                listEl.appendChild(itemEl);
+                listEl.appendChild(li);
             });
 
-            // Enable/disable delete button based on selection size
             const deleteBtn = document.getElementById('delete-selected-btn');
             if (deleteBtn) {
                 deleteBtn.disabled = window.selectedInventoryIds.size === 0;
             }
         };
 
-        // --- BATCH DELETION LOGIC ---
-        
+        window.renderSavedRecipes = () => {
+            const listEl = document.getElementById('saved-recipes-list');
+            if (!listEl) return;
+            listEl.innerHTML = '<ul></ul>';
+            const ul = listEl.querySelector('ul');
+            window.savedRecipes.forEach(recipe => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" class="item-link item-content">
+                        <div class="item-inner">
+                            <div class="item-title">${recipe.title}</div>
+                        </div>
+                    </a>
+                `;
+                li.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    app.dialog.alert(recipe.content, recipe.title);
+                });
+                ul.appendChild(li);
+            });
+        };
+
+        window.renderShoppingList = () => {
+            const listEl = document.getElementById('shopping-list');
+            if (!listEl) return;
+            listEl.innerHTML = '<ul></ul>';
+            const ul = listEl.querySelector('ul');
+            window.shoppingList.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="item-content">
+                        <div class="item-inner">
+                            <div class="item-title">${item.name}</div>
+                            <div class="item-after">
+                                <a href="#" onclick="window.removeShoppingItem('${item.id}'); return false;" class="button button-small button-fill color-red">Remove</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                ul.appendChild(li);
+            });
+        };
+
+        window.renderSchedule = () => {
+            const container = document.getElementById('calendar-container');
+            if (!container) return;
+            container.innerHTML = '<div class="list"><ul></ul></div>';
+            const ul = container.querySelector('ul');
+            
+            const dates = Object.keys(window.mealSchedule).sort();
+            dates.forEach(date => {
+                const meal = window.mealSchedule[date];
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="item-content">
+                        <div class="item-inner">
+                            <div class="item-title">${date}</div>
+                            <div class="item-subtitle">${meal.recipeTitle}</div>
+                        </div>
+                    </div>
+                `;
+                ul.appendChild(li);
+            });
+        };
+
+        // Inventory CRUD
         window.toggleInventorySelection = (id) => {
             if (window.selectedInventoryIds.has(id)) {
                 window.selectedInventoryIds.delete(id);
@@ -1172,125 +830,87 @@
         };
 
         window.deleteSelectedItems = () => {
-            if (window.selectedInventoryIds.size === 0) {
-                console.log('No items selected for deletion.');
-                return;
-            }
+            if (window.selectedInventoryIds.size === 0) return;
             const idsToRemove = Array.from(window.selectedInventoryIds);
             const newInventory = window.inventory.filter(item => !idsToRemove.includes(item.id));
             window.selectedInventoryIds.clear();
             window.saveInventoryToDb(newInventory);
         };
-        
+
         window.removeAllItems = () => {
             if (window.inventory.length === 0) return;
-            window.saveInventoryToDb([]);
+            app.dialog.confirm('Remove all items from inventory?', 'Confirm', () => {
+                window.saveInventoryToDb([]);
+            });
         };
 
         window.addManualItem = () => {
             const inputEl = document.getElementById('manual-item-input');
             const expiryEl = document.getElementById('manual-expiry-input');
             const name = inputEl.value.trim();
-            const expiry = expiryEl.value || null; 
+            const expiry = expiryEl.value || null;
 
             if (name) {
-                const newItem = { id: generateId(), name: name, expiry: expiry };
-                window.appendItemsToInventory([newItem]); 
+                const newItem = { id: generateId(), name: name, expiry: expiry, quantity: 1 };
+                window.appendItemsToInventory([newItem]);
                 inputEl.value = '';
                 expiryEl.value = '';
             }
         };
-        
-        // --- ITEM NAME/QUANTITY EDIT MODAL LOGIC (NEW) ---
-        
-        window.showEditItemNameModal = (identifier) => {
-            let item = window.inventory.find(i => i.id === identifier);
 
-            if (!item) return console.error("Could not find item to show name edit modal.");
+        window.adjustQuantity = (id, delta) => {
+            const itemIndex = window.inventory.findIndex(item => item.id === id);
+            if (itemIndex === -1) return;
 
-            document.getElementById('modal-item-name-input').value = item.name;
-            document.getElementById('modal-item-identifier-name-edit').value = identifier;
-            document.getElementById('item-edit-modal').classList.remove('hidden');
+            const newInventory = JSON.parse(JSON.stringify(window.inventory));
+            const currentQty = newInventory[itemIndex].quantity || 1;
+            const newQty = Math.max(1, currentQty + delta);
+
+            newInventory[itemIndex].quantity = newQty;
+            window.saveInventoryToDb(newInventory);
         };
 
-        window.hideEditItemNameModal = () => {
-            document.getElementById('item-edit-modal').classList.add('hidden');
-            document.getElementById('modal-item-identifier-name-edit').value = '';
+        window.showEditItemNameModal = (id) => {
+            const item = window.inventory.find(i => i.id === id);
+            if (!item) return;
+
+            app.dialog.prompt('Edit item name:', 'Edit Item', (value) => {
+                if (!value.trim()) return;
+                const itemIndex = window.inventory.findIndex(i => i.id === id);
+                if (itemIndex >= 0) {
+                    const newInventory = JSON.parse(JSON.stringify(window.inventory));
+                    newInventory[itemIndex].name = value.trim();
+                    window.saveInventoryToDb(newInventory);
+                }
+            }, () => {}, item.name);
         };
 
-        window.saveItemNameEdit = () => {
-            const identifier = document.getElementById('modal-item-identifier-name-edit').value;
-            const newName = document.getElementById('modal-item-name-input').value.trim();
-            
-            if (!newName) {
-                // Should use a custom modal for this in a real app, but for now, just close and log
-                console.error("Item name cannot be empty.");
-                window.hideEditItemNameModal();
-                return;
-            }
+        window.showEditExpiryModal = (id, itemName) => {
+            const item = window.inventory.find(i => i.id === id);
+            if (!item) return;
 
-            const indexToUpdate = window.inventory.findIndex(item => item.id === identifier);
-            
-            if (indexToUpdate >= 0) {
-                const newInventory = JSON.parse(JSON.stringify(window.inventory));
-                newInventory[indexToUpdate].name = newName;
-                window.saveInventoryToDb(newInventory); 
-            } else {
-                console.error("Could not find item to update name for identifier:", identifier);
-            }
-            
-            window.hideEditItemNameModal();
+            app.dialog.prompt('Enter expiry date (YYYY-MM-DD):', itemName, (value) => {
+                const itemIndex = window.inventory.findIndex(i => i.id === id);
+                if (itemIndex >= 0) {
+                    const newInventory = JSON.parse(JSON.stringify(window.inventory));
+                    newInventory[itemIndex].expiry = value || null;
+                    window.saveInventoryToDb(newInventory);
+                }
+            }, () => {}, item.expiry || '');
         };
 
-        // --- EXPIRY MODAL LOGIC ---
-
-        window.showEditExpiryModal = (identifier, itemName) => {
-            let item = window.inventory.find(i => i.id === identifier);
-
-            if (!item) return console.error("Could not find item to show modal.");
-
-            document.getElementById('modal-item-name-expiry').textContent = itemName;
-            document.getElementById('modal-item-identifier-expiry').value = identifier;
-            document.getElementById('modal-expiry-date').value = item.expiry || '';
-            document.getElementById('expiry-edit-modal').classList.remove('hidden');
-        };
-
-        window.hideEditExpiryModal = () => {
-            document.getElementById('expiry-edit-modal').classList.add('hidden');
-            document.getElementById('modal-item-identifier-expiry').value = '';
-        };
-
-        window.saveExpiry = () => {
-            const identifier = document.getElementById('modal-item-identifier-expiry').value;
-            const newDate = document.getElementById('modal-expiry-date').value;
-            
-            const indexToUpdate = window.inventory.findIndex(item => item.id === identifier);
-            
-            if (indexToUpdate >= 0 && indexToUpdate < window.inventory.length) {
-                const newInventory = JSON.parse(JSON.stringify(window.inventory));
-                newInventory[indexToUpdate].expiry = newDate || null;
-                window.saveInventoryToDb(newInventory); 
-            } else {
-                console.error("Could not find item to update expiry for identifier:", identifier);
-            }
-            
-            window.hideEditExpiryModal();
-        };
-
-        // --- VISION SCANNER LOGIC ---
-
-        const imagePreviewEl = document.getElementById('image-preview');
-        const imagePlaceholderEl = document.getElementById('image-placeholder');
+        // Scanner logic
+        const imagePreviewEl = document.getElementById('scan-preview');
+        const imagePlaceholderEl = document.getElementById('scan-placeholder');
         const processScanBtn = document.getElementById('process-scan-btn');
         const scanStatusEl = document.getElementById('scan-status');
         const scanStatusTextEl = document.getElementById('scan-status-text');
         const scanErrorEl = document.getElementById('scan-error');
         const detectionResultEl = document.getElementById('detection-result');
         const detectedItemsListEl = document.getElementById('detected-items-list');
-        
+
         document.getElementById('camera-input').addEventListener('change', handleImageInput);
         document.getElementById('file-input').addEventListener('change', handleImageInput);
-
 
         function handleImageInput(e) {
             const file = e.target.files[0];
@@ -1299,8 +919,8 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     imagePreviewEl.src = event.target.result;
-                    imagePreviewEl.classList.remove('hidden');
-                    imagePlaceholderEl.classList.add('hidden');
+                    imagePreviewEl.style.display = 'block';
+                    imagePlaceholderEl.style.display = 'none';
                     const base64String = event.target.result.split(',')[1];
                     window.latestImageBase64 = {
                         data: base64String,
@@ -1308,48 +928,26 @@
                     };
                 };
                 reader.readAsDataURL(file);
-            } else {
-                processScanBtn.disabled = true;
-                imagePreviewEl.classList.add('hidden');
-                imagePlaceholderEl.classList.remove('hidden');
-                window.latestImageBase64 = null;
             }
-            detectionResultEl.classList.add('hidden');
-            scanErrorEl.classList.add('hidden');
-            document.getElementById('camera-input').value = ''; 
-            document.getElementById('file-input').value = '';
+            detectionResultEl.style.display = 'none';
+            scanErrorEl.style.display = 'none';
         }
-        
-        function resetScanner() {
-            document.getElementById('camera-input').value = '';
-            document.getElementById('file-input').value = '';
-            
-            imagePreviewEl.classList.add('hidden');
-            imagePlaceholderEl.classList.remove('hidden');
-            processScanBtn.disabled = true;
-            detectionResultEl.classList.add('hidden');
-            scanStatusEl.classList.add('hidden');
-            scanErrorEl.classList.add('hidden');
-            window.latestImageBase64 = null;
-            scanStatusTextEl.textContent = "Analyzing image with Gemini Vision...";
-        }
+
+        processScanBtn.addEventListener('click', processImageForInventory);
 
         async function processImageForInventory() {
             if (!window.latestImageBase64) {
-                scanErrorEl.textContent = "Please select or capture an image first.";
-                scanErrorEl.classList.remove('hidden');
+                app.dialog.alert('Please select an image first', 'Error');
                 return;
             }
 
-            scanStatusEl.classList.remove('hidden');
-            detectionResultEl.classList.add('hidden');
-            scanErrorEl.classList.add('hidden');
+            scanStatusEl.style.display = 'block';
+            detectionResultEl.style.display = 'none';
+            scanErrorEl.style.display = 'none';
             processScanBtn.disabled = true;
 
-            scanStatusTextEl.textContent = "Preparing payload for Gemini Vision...";
-            
-            const userQuery = "Analyze the contents of this image. Identify and list all visible food, drink, and cooking ingredients. For each item, list the name and estimate quantity or size (e.g., a loaf of bread, 5 apples, 2 liters of milk).";
-            
+            const userQuery = "Analyze the contents of this image. Identify and list all visible food, drink, and cooking ingredients. For each item, list the name and estimate quantity or size.";
+
             const responseSchema = {
                 type: "OBJECT",
                 properties: {
@@ -1358,14 +956,15 @@
                         items: {
                             type: "OBJECT",
                             properties: {
-                                "name": { "type": "STRING", "description": "The name of the detected food item, including quantity/size if visible, e.g., 'A dozen eggs', 'Two liters of milk'." },
-                                "confidence": { "type": "STRING", "description": "A confidence rating (High, Medium, Low) for the detection." }
+                                "name": { "type": "STRING", "description": "The name of the detected food item with quantity." },
+                                "confidence": { "type": "STRING", "description": "High, Medium, or Low" }
                             },
                             required: ["name", "confidence"]
                         }
                     }
                 }
             };
+
             const payload = {
                 modelName: GEMINI_VISION_MODEL,
                 contents: [{
@@ -1381,118 +980,123 @@
                     ]
                 }],
                 generationConfig: {
-                    // Removed responseMimeType and responseSchema
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema
                 },
             };
 
-            let success = false;
-            let attempts = 0;
-            const maxAttempts = 5;
-            let delay = 1000;
+            try {
+                const result = await window.callGemini(payload);
+                const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-            while (attempts < maxAttempts && !success) {
-                try {
-                    attempts++;
-                    scanStatusTextEl.textContent = `Sending request (Attempt ${attempts}/${maxAttempts})...`;
-
-                    // *** MODIFIED: Use Firebase Function ***
-                    const result = await window.callGemini(payload);
-                    
-                    const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (responseData) {
-                        let parsedJson;
-                        try {
-                            const cleaned = responseData
-                                .replace(/^```json\s*/i, '')
-                                .replace(/```\s*$/,'')
-                                .trim();
-                            parsedJson = JSON.parse(cleaned);
-                        } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function (Vision):", responseData, e);
-                            throw new Error("Cloud Function returned invalid JSON structure.");
-                        }
-
-                        window.renderDetectedItems(parsedJson.detectedIngredients || []);
-                        success = true;
-                    } else {
-                        console.error("Cloud Function returned an empty or invalid response:", result);
-                        throw new Error("Vision model returned an empty or invalid response. Try a different image.");
+                if (responseData) {
+                    let parsedJson;
+                    try {
+                        const cleaned = responseData.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+                        parsedJson = JSON.parse(cleaned);
+                    } catch (e) {
+                        throw new Error("Invalid JSON structure.");
                     }
 
-                } catch (error) {
-                    console.error(`Vision processing Attempt ${attempts} failed:`, error);
-                    if (attempts < maxAttempts) {
-                        scanStatusTextEl.textContent = `Attempt failed. Retrying in ${delay / 1000}s...`;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2;
-                    } else {
-                        scanErrorEl.textContent = `Final attempt failed: ${error.message}. Cannot connect to Vision service. Check console for details.`;
-                        scanErrorEl.classList.remove('hidden');
-                    }
+                    window.renderDetectedItems(parsedJson.detectedIngredients || []);
+                } else {
+                    throw new Error("Empty response from vision model.");
                 }
+            } catch (error) {
+                scanErrorEl.textContent = 'Error: ' + error.message;
+                scanErrorEl.style.display = 'block';
             }
-            
-            scanStatusEl.classList.add('hidden');
+
+            scanStatusEl.style.display = 'none';
             processScanBtn.disabled = false;
         }
-        
+
         window.renderDetectedItems = (items) => {
             detectedItemsListEl.innerHTML = '';
-            
+
             const currentNames = window.inventory.map(item => item.name.toLowerCase());
             const newItems = items.filter(item => !currentNames.includes(item.name.toLowerCase()));
-            
+
             window.itemsToSave = newItems;
 
             if (newItems.length === 0) {
-                 detectedItemsListEl.innerHTML = '<p class="text-sm text-gray-500">All detected items seem to be in your current inventory, or no new items were found.</p>';
-                 detectionResultEl.classList.add('hidden'); 
-                 return;
-            }
-
-            newItems.forEach((item, index) => {
-                const confidenceColor = item.confidence.toLowerCase() === 'high' ? 'text-teal-600' : 
-                                        item.confidence.toLowerCase() === 'medium' ? 'text-yellow-600' : 'text-red-600';
-                                        
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center space-x-2';
-                itemDiv.innerHTML = `
-                    <input type="checkbox" id="detected-item-${index}" checked data-name="${item.name}" class="form-checkbox h-4 w-4 text-teal-600 rounded">
-                    <label for="detected-item-${index}" class="text-gray-700 text-sm flex-grow">${item.name}</label>
-                    <span class="text-xs font-semibold ${confidenceColor}">(${item.confidence})</span>
-                `;
-                detectedItemsListEl.appendChild(itemDiv);
-            });
-
-            detectionResultEl.classList.remove('hidden');
-        };
-
-        function saveDetectedInventory() {
-            const checkboxes = detectedItemsListEl.querySelectorAll('input[type="checkbox"]:checked');
-            
-            const itemsToAdd = Array.from(checkboxes)
-                .map(cb => cb.dataset.name.trim())
-                .filter(name => name.length > 0); 
-
-            if (itemsToAdd.length === 0) {
-                resetScanner();
-                switchTab('inventory');
+                detectionResultEl.style.display = 'none';
                 return;
             }
 
-            const newItems = itemsToAdd.map(name => ({ id: generateId(), name: name, expiry: null }));
+            newItems.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <label class="item-checkbox item-content">
+                        <input type="checkbox" checked data-name="${item.name}">
+                        <i class="icon icon-checkbox"></i>
+                        <div class="item-inner">
+                            <div class="item-title">${item.name}</div>
+                            <div class="item-after">${item.confidence}</div>
+                        </div>
+                    </label>
+                `;
+                detectedItemsListEl.appendChild(li);
+            });
 
-            window.appendItemsToInventory(newItems); 
+            detectionResultEl.style.display = 'block';
+        };
 
-            resetScanner();
-            switchTab('inventory');
-        }
+        window.saveDetectedInventory = function() {
+            const checkboxes = detectedItemsListEl.querySelectorAll('input[type="checkbox"]:checked');
 
+            const itemsToAdd = Array.from(checkboxes)
+                .map(cb => cb.dataset.name.trim())
+                .filter(name => name.length > 0);
 
-        // --- RECIPE GENERATION & SAVING LOGIC (REFRESHED) ---
-        
-        // This function formats the recipe object's details into a clean string for display/saving
+            if (itemsToAdd.length === 0) return;
+
+            const newItems = itemsToAdd.map(name => ({ id: generateId(), name: name, expiry: null, quantity: 1 }));
+            window.appendItemsToInventory(newItems);
+
+            // Reset scanner
+            imagePreviewEl.style.display = 'none';
+            imagePlaceholderEl.style.display = 'block';
+            processScanBtn.disabled = true;
+            detectionResultEl.style.display = 'none';
+            window.latestImageBase64 = null;
+
+            app.toast.create({
+                text: `Added ${newItems.length} items to inventory`,
+                closeTimeout: 2000,
+            }).open();
+        };
+
+        // Shopping list functions
+        window.addShoppingItem = function() {
+            const input = document.getElementById('shopping-item-input');
+            const name = input.value.trim();
+            if (name) {
+                const newItem = { id: generateId(), name: name };
+                const newList = [...window.shoppingList, newItem];
+                window.saveShoppingListToDb(newList);
+                input.value = '';
+            }
+        };
+
+        window.removeShoppingItem = function(id) {
+            const newList = window.shoppingList.filter(item => item.id !== id);
+            window.saveShoppingListToDb(newList);
+        };
+
+        // Recipe functions
+        window.toggleUnits = function(unit) {
+            window.units = unit;
+            const buttons = document.querySelectorAll('[data-unit]');
+            buttons.forEach(btn => {
+                if (btn.dataset.unit === unit) {
+                    btn.classList.add('button-active');
+                } else {
+                    btn.classList.remove('button-active');
+                }
+            });
+        };
+
         const formatRecipeContent = (recipe) => {
             const content = `
 Recipe Name: ${recipe.recipeName}
@@ -1503,788 +1107,266 @@ ${recipe.ingredientsSummary}
 --- INSTRUCTIONS ---
 ${recipe.instructions}
 
-(Note: The AI selected the following inventory items to be marked as used: ${recipe.deductibleInventoryStrings.join(', ') || 'None'})
+${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MISSING INGREDIENTS ---\n' + recipe.missingIngredients.join('\n') : ''}
 `;
             return content.trim();
         };
 
-        async function generateRecipes() {
+        window.generateRecipes = async function() {
             if (window.inventory.length === 0) {
-                document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Your pantry is empty! Please add or scan items before generating a recipe.</p>';
+                app.dialog.alert('Your pantry is empty! Please add items first.', 'Error');
                 return;
             }
 
             const statusEl = document.getElementById('recipe-generation-status');
-            statusEl.classList.remove('hidden');
-            document.getElementById('recipe-list-container').classList.add('opacity-50', 'pointer-events-none');
-            document.getElementById('recipe-detail-view').classList.add('hidden');
-            document.getElementById('recipe-list-view').innerHTML = '';
+            const listEl = document.getElementById('recipe-list-view');
+            statusEl.style.display = 'block';
+            listEl.innerHTML = '';
 
-            const servingsInput = document.getElementById('servings-input');
-            const dietaryInput = document.getElementById('dietary-input').value.trim();
-            const timeInput = document.getElementById('time-input').value.trim();
-            const servingSize = servingsInput ? parseInt(servingsInput.value, 10) : 2;
+            const maxCookTime = document.getElementById('max-cook-time').value;
+            const maxIngredients = document.getElementById('max-ingredients').value;
             const allowMissingIngredients = document.getElementById('allow-missing-ingredients').checked;
 
             const inventoryList = window.inventory.map(item => {
                 let s = item.name;
-                if (item.expiry) {
-                    s += ` (Expires ${item.expiry})`;
-                }
+                if (item.quantity > 1) s += ` (x${item.quantity})`;
+                if (item.expiry) s += ` (Expires ${item.expiry})`;
                 return s;
             }).join(', ');
-            
+
             const unitPreference = window.units === 'metric' ?
-                'Use Metric measurements (grams, milliliters, Celsius) for all quantities and temperatures.' :
-                'Use Standard US measurements (ounces, teaspoons, cups, Fahrenheit) for all quantities and temperatures.';
+                'Use Metric measurements (grams, milliliters, Celsius)' :
+                'Use Standard US measurements (ounces, cups, Fahrenheit)';
 
-            let constraintPrompt = `Create recipes that serve ${servingSize} people.`;
-            if (dietaryInput) { constraintPrompt += ` They must be strictly ${dietaryInput}.`; }
-            if (timeInput && !isNaN(parseInt(timeInput))) { constraintPrompt += ` The total preparation and cooking time should be less than ${timeInput} minutes.`; }
+            let systemPrompt = `You are a world-class chef. ${unitPreference}. Cooking time under ${maxCookTime} minutes. Max ${maxIngredients} ingredients. `;
 
-            let systemPrompt = `You are a world-class chef and recipe generator. ${unitPreference} ${constraintPrompt} `;
-            
             if (allowMissingIngredients) {
-                systemPrompt += `Suggest exactly 3 distinct, complete, easy-to-follow meal recipes that can be made with the user\'s inventory, BUT you may include additional common ingredients that are missing. Clearly mark which ingredients are AVAILABLE from inventory and which are MISSING (need to be purchased). For 'missingIngredients', include specific quantities (e.g., '4 eggs', '2 cups flour'). For 'deductibleInventoryStrings', only include items that ARE in the user\'s inventory list.`;
+                systemPrompt += `Generate 3 recipes using available inventory, but you may include common missing ingredients. Mark which are AVAILABLE vs MISSING.`;
             } else {
-                systemPrompt += `Based *only* on the ingredients provided in the user\'s inventory, suggest exactly 3 distinct, complete, easy-to-follow meal recipes. For each recipe, list the exact name/string of the item from the user\'s inventory that should be consumed (deleted from the app) upon making the recipe. Do NOT include basic pantry staples like salt, water, pepper, or oil in the 'deductibleInventoryStrings' list.`;
+                systemPrompt += `Generate 3 recipes using ONLY the ingredients from inventory.`;
             }
 
-            const userQuery = `My current pantry inventory is: ${inventoryList}. Generate 3 meal recipes for ${servingSize} people I can make${allowMissingIngredients ? ' (including recipes that may need additional ingredients)' : ' right now'}. Output the response strictly as a JSON array matching the provided schema.`;
+            const userQuery = `My pantry: ${inventoryList}. Generate 3 recipes.`;
 
-            // NEW Structured Schema
             const recipeSchema = {
                 type: "ARRAY",
                 items: {
                     type: "OBJECT",
                     properties: {
-                        "recipeName": { "type": "STRING", "description": "The concise, appealing name of the recipe." },
-                        "ingredientsSummary": { "type": "STRING", "description": "A well-formatted, multi-line list of all ingredients, clearly separating AVAILABLE items from MISSING items (required). Do NOT format as JSON. Use Markdown lists." },
-                        "instructions": { "type": "STRING", "description": "Simple, step-by-step cooking instructions using numbered lists." },
+                        "recipeName": { "type": "STRING" },
+                        "ingredientsSummary": { "type": "STRING" },
+                        "instructions": { "type": "STRING" },
                         "deductibleInventoryStrings": { 
-                            "type": "ARRAY", 
-                            "description": "An array of strings. Each string MUST EXACTLY match the name property of an item in the user\'s INVENTORY list that was consumed (e.g., ['Milk (1L)', '5 Eggs']). This is for deduction.",
+                            "type": "ARRAY",
                             "items": { "type": "STRING" }
                         },
                         "missingIngredients": {
                             "type": "ARRAY",
-                            "description": "Ingredients not available in user\'s inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
                             "items": { "type": "STRING" }
                         }
                     },
                     required: ["recipeName", "ingredientsSummary", "instructions", "deductibleInventoryStrings"]
                 }
             };
-            
+
             const payload = {
                 modelName: GEMINI_TEXT_MODEL,
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 generationConfig: {
-                    // Removed responseMimeType and responseSchema
-                },
-            };
-
-            let success = false;
-            let attempts = 0;
-            const maxAttempts = 5;
-            let delay = 1000;
-
-            while (attempts < maxAttempts && !success) {
-                try {
-                    attempts++;
-                    statusEl.querySelector('p').textContent = `Consulting the Smart Chef (Attempt ${attempts}/${maxAttempts})...`;
-
-                    // *** MODIFIED: Use Firebase Function ***
-                    const result = await window.callGemini(payload);
-                    const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    const groundingMetadata = result?.data?.result?.candidates?.[0]?.groundingMetadata;
-
-                    if (responseData) {
-                        let parsedJson;
-                        try {
-                            const cleaned = responseData
-                                .replace(/^```json\s*/i, '')
-                                .replace(/```\s*$/,'')
-                                .trim();
-                            parsedJson = JSON.parse(cleaned);
-                        } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function (Generate Recipes):", responseData, e);
-                            throw new Error("Cloud Function returned invalid JSON structure.");
-                        }
-                        
-                        // Store the structured recipes
-                        window.latestGeneratedRecipes = parsedJson;
-                        window.renderGeneratedRecipesList();
-                        
-                        // Handle grounding sources
-                        const sourcesEl = document.getElementById('recipe-sources');
-                        sourcesEl.innerHTML = '';
-                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                            const sources = groundingMetadata.groundingAttributions
-                                .map(attribution => ({ uri: attribution.web?.uri, title: attribution.web?.title, }))
-                                .filter(source => source.uri && source.title);
-                            
-                            if (sources.length > 0) {
-                                sourcesEl.innerHTML = 'Sources: ' + sources.map((s, i) => 
-                                    `<a href="${s.uri}" target="_blank" class="text-indigo-500 hover:text-indigo-700 underline">${s.title}</a>`
-                                ).join(' | ');
-                            }
-                        }
-                        
-                        success = true;
-                    } else {
-                        console.error("Cloud Function returned an empty or invalid response:", result);
-                        throw new Error("Could not retrieve a valid recipe from the AI Chef. Try again.");
-                    }
-
-                } catch (error) {
-                    console.error(`Recipe Generation Attempt ${attempts} failed:`, error);
-                    if (attempts < maxAttempts) {
-                        statusEl.querySelector('p').textContent = `Attempt failed. Retrying in ${delay / 1000}s...`;
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2;
-                    } else {
-                        document.getElementById('recipe-list-view').innerHTML = `<p class="text-red-500 text-sm font-bold">Error: ${error.message || 'Connection failed'}</p><p class="text-xs text-gray-600 mt-2">Check browser console (F12) for details. Verify your Cloud Function is deployed and has the correct permissions.</p>`;
-                    }
+                    responseMimeType: "application/json",
+                    responseSchema: recipeSchema
                 }
-            }
-
-            statusEl.classList.add('hidden');
-            document.getElementById('recipe-list-container').classList.remove('opacity-50', 'pointer-events-none');
-        }
-
-        window.renderGeneratedRecipesList = () => {
-            const listEl = document.getElementById('recipe-list-view');
-            const detailEl = document.getElementById('recipe-detail-view');
-            
-            detailEl.classList.add('hidden');
-            
-            if (window.latestGeneratedRecipes.length === 0) {
-                listEl.innerHTML = '<p class="text-gray-500 text-sm">No recipes generated yet or last generation failed.</p>';
-                return;
-            }
-
-            listEl.innerHTML = '<h3 class="text-lg font-semibold text-gray-700 mb-2">Select a Recipe to View Details:</h3>';
-            
-            window.latestGeneratedRecipes.forEach((recipe, index) => {
-                const button = document.createElement('button');
-                button.className = 'w-full text-left p-3 bg-white hover:bg-pink-50 border border-gray-200 rounded-lg text-gray-700 font-semibold transition truncate shadow-sm';
-                button.textContent = recipe.recipeName;
-                button.onclick = () => window.viewGeneratedRecipe(index);
-                listEl.appendChild(button);
-            });
-            listEl.classList.remove('hidden');
-        };
-
-        window.viewGeneratedRecipe = (index) => {
-            const recipe = window.latestGeneratedRecipes[index];
-            if (!recipe) return;
-
-            window.selectedGeneratedRecipeIndex = index;
-            
-            const content = formatRecipeContent(recipe);
-
-            document.getElementById('generated-recipe-title').textContent = recipe.recipeName;
-            document.getElementById('recipe-output').textContent = content;
-            document.getElementById('recipe-list-view').classList.add('hidden');
-            document.getElementById('recipe-detail-view').classList.remove('hidden');
-            
-            // Update button text to reflect the status of the deduction
-            const deductBtn = document.getElementById('deduct-inventory-btn');
-            deductBtn.disabled = false;
-            deductBtn.textContent = 'Mark as Made & Deduct';
-        };
-
-        window.saveGeneratedRecipe = async () => {
-            if (window.selectedGeneratedRecipeIndex === null) return;
-            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
-            if (!recipe) return;
-            
-            const content = formatRecipeContent(recipe);
-            
-            const saved = await window.saveGeneratedRecipeToDb(recipe.recipeName, content);
-            
-            if (saved) {
-                const saveBtn = document.getElementById('save-recipe-btn');
-                saveBtn.textContent = 'Saved!';
-                setTimeout(() => saveBtn.textContent = 'Save This Recipe', 2000);
-            }
-        };
-                // --- NEW: INVENTORY DEDUCTION LOGIC ---
-                window.deductInventory = () => {
-            if (window.selectedGeneratedRecipeIndex === null) return;
-            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
-            
-            if (!recipe || !Array.isArray(recipe.deductibleInventoryStrings)) {
-                console.error("Recipe or deduction list is invalid.");
-                return;
-            }
-
-            const itemsToDeduct = recipe.deductibleInventoryStrings.map(s => s.trim().toLowerCase());
-            
-            if (itemsToDeduct.length === 0) {
-                 const deductBtn = document.getElementById('deduct-inventory-btn');
-                 deductBtn.textContent = 'No inventory items used!';
-                 deductBtn.disabled = true;
-                 setTimeout(() => { deductBtn.textContent = 'Mark as Made & Deduct'; deductBtn.disabled = false; }, 3000);
-                 return;
-            }
-
-            // Filter the current inventory: keep items whose name does NOT exactly match 
-            // any name in the itemsToDeduct list (case-insensitive check).
-            const newInventory = window.inventory.filter(item => {
-                return !itemsToDeduct.includes(item.name.trim().toLowerCase());
-            });
-
-            // Count how many items were removed
-            const itemsRemovedCount = window.inventory.length - newInventory.length;
-            
-            // 1. Save the new inventory list (overwrites the old one)
-            window.saveInventoryToDb(newInventory); 
-
-            // 2. Update the button status to provide feedback
-            const deductBtn = document.getElementById('deduct-inventory-btn');
-            deductBtn.textContent = `Removed ${itemsRemovedCount} item(s)!`;
-            deductBtn.disabled = true;
-            
-            // 3. Reset button after delay
-            setTimeout(() => {
-                deductBtn.textContent = 'Mark as Made & Deduct';
-                deductBtn.disabled = false;
-                window.renderGeneratedRecipesList(); // Go back to list view
-            }, 3000);
-        };
-        // --- END DEDUCTION LOGIC ---
-
-
-        window.renderSavedRecipes = () => {
-            const listEl = document.getElementById('saved-recipes-list');
-            const countEl = document.getElementById('saved-recipe-count-inline');
-            const placeholder = document.getElementById('saved-recipes-placeholder');
-            const recipeViewEl = document.getElementById('selected-recipe-view');
-
-            if (!listEl || !placeholder) return;
-
-            listEl.innerHTML = '';
-            recipeViewEl.classList.add('hidden');
-            
-            if (countEl) {
-                countEl.textContent = `(${window.savedRecipes.length} recipes)`;
-            }
-            placeholder.classList.toggle('hidden', window.savedRecipes.length > 0);
-
-            window.savedRecipes.forEach(recipe => {
-                const itemEl = document.createElement('button');
-                itemEl.className = 'w-full text-left p-3 bg-gray-50 hover:bg-teal-50 border border-gray-100 rounded-lg text-gray-700 text-sm transition truncate';
-                itemEl.textContent = recipe.title;
-                itemEl.onclick = () => window.viewSavedRecipe(recipe.id);
-                listEl.appendChild(itemEl);
-            });
-            
-            if (window.selectedSavedRecipeId) {
-                const selected = window.savedRecipes.find(r => r.id === window.selectedSavedRecipeId);
-                if (selected) {
-                    window.viewSavedRecipe(window.selectedSavedRecipeId);
-                } else {
-                    window.selectedSavedRecipeId = null;
-                }
-            }
-        };
-        
-        window.viewSavedRecipe = (recipeId) => {
-            const recipe = window.savedRecipes.find(r => r.id === recipeId);
-            const recipeViewEl = document.getElementById('selected-recipe-view');
-            const titleEl = document.getElementById('selected-recipe-title');
-            const contentEl = document.getElementById('selected-recipe-content');
-
-            if (recipe) {
-                document.querySelectorAll('#saved-recipes-list button').forEach(btn => 
-                    btn.classList.remove('bg-teal-200', 'border-teal-400')
-                );
-                const selectedButton = document.querySelector(`#saved-recipes-list button[onclick*="${recipeId}"]`);
-                if(selectedButton) {
-                    selectedButton.classList.add('bg-teal-200', 'border-teal-400');
-                }
-
-                titleEl.textContent = recipe.title;
-                contentEl.textContent = recipe.content;
-                recipeViewEl.classList.remove('hidden');
-                window.selectedSavedRecipeId = recipeId;
-            }
-        };
-        
-        // --- SHOPPING LIST RENDER & CRUD ---
-        window.renderShoppingList = () => {
-            const listEl = document.getElementById('shopping-list');
-            const countEl = document.getElementById('shopping-count');
-            const placeholder = document.getElementById('shopping-placeholder');
-            if (!listEl) {
-                console.error('Shopping list container not found!');
-                return;
-            }
-
-            listEl.innerHTML = '';
-            if (countEl) countEl.textContent = `(${(window.shoppingList || []).length} items)`;
-            if (placeholder) placeholder.classList.toggle('hidden', (window.shoppingList || []).length > 0);
-
-            (window.shoppingList || []).forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center justify-between p-2 bg-gray-50 border border-gray-100 rounded-lg';
-                row.innerHTML = `
-                    <span class="text-gray-700 text-sm">${item.name}</span>
-                    <div class="flex gap-2">
-                        <button class="text-green-500 hover:text-green-700 text-sm font-semibold" onclick="addShoppingItemToInventory('${item.id}')">+ Inventory</button>
-                        <button class="text-indigo-500 hover:text-indigo-700 text-sm font-semibold" onclick="editShoppingItem('${item.id}')">Edit</button>
-                        <button class="text-red-500 hover:text-red-700 text-sm font-semibold" onclick="removeShoppingItem('${item.id}')">Remove</button>
-                    </div>
-                `;
-                listEl.appendChild(row);
-            });
-            
-            console.log('Shopping list rendered:', (window.shoppingList || []).length, 'items');
-        };
-
-        window.addShoppingItem = () => {
-            const input = document.getElementById('shopping-input');
-            if (!input) {
-                console.error('Shopping input not found!');
-                return;
-            }
-            const name = (input.value || '').trim();
-            if (!name) {
-                console.log('Empty shopping item name, skipping.');
-                return;
-            }
-            console.log('Adding shopping item:', name);
-            const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-            const newItem = { id: genId(), name };
-            const next = [...(window.shoppingList || []), newItem];
-            window.saveShoppingListToDb(next);
-            input.value = '';
-        };
-
-        window.removeShoppingItem = (id) => {
-            const next = (window.shoppingList || []).filter(i => i.id !== id);
-            window.saveShoppingListToDb(next);
-        };
-
-        window.clearShoppingList = () => {
-            if (!window.shoppingList || window.shoppingList.length === 0) return;
-            
-            const confirmed = confirm(`Remove all ${window.shoppingList.length} items from your shopping list?`);
-            if (confirmed) {
-                window.saveShoppingListToDb([]);
-            }
-        };
-
-        window.editShoppingItem = (id) => {
-            const item = (window.shoppingList || []).find(i => i.id === id);
-            if (!item) return;
-            const updated = window.prompt('Edit item', item.name);
-            if (updated === null) return; // cancelled
-            const name = updated.trim();
-            if (!name) return;
-            const next = (window.shoppingList || []).map(i => i.id === id ? { ...i, name } : i);
-            window.saveShoppingListToDb(next);
-        };
-
-        // Add shopping item to inventory
-        window.addShoppingItemToInventory = (id) => {
-            const item = (window.shoppingList || []).find(i => i.id === id);
-            if (!item) return;
-            
-            // Generate new inventory item with ID
-            const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-            const newInventoryItem = { id: genId(), name: item.name, expiry: null };
-            
-            // Add to inventory
-            window.appendItemsToInventory([newInventoryItem]);
-            
-            // Remove from shopping list
-            const nextShoppingList = (window.shoppingList || []).filter(i => i.id !== id);
-            window.saveShoppingListToDb(nextShoppingList);
-            
-            console.log('Moved to inventory:', item.name);
-        };
-
-        // Add missing ingredients from currently viewed recipe
-        window.addMissingToShoppingList = () => {
-            if (window.selectedGeneratedRecipeIndex === null) return;
-            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
-            if (!recipe) return;
-            let missing = Array.isArray(recipe.missingIngredients) ? recipe.missingIngredients.slice() : [];
-
-            // Fallback: try to parse from ingredientsSummary
-            if (missing.length === 0 && typeof recipe.ingredientsSummary === 'string') {
-                const lines = recipe.ingredientsSummary.split('\n');
-                missing = lines
-                    .filter(l => /(missing|to buy|purchase)/i.test(l))
-                    .map(l => l.replace(/^[-*]\s*/,'').replace(/\**/g,'').replace(/\(.*?\)/g,'').trim())
-                    .filter(Boolean);
-            }
-
-            if (missing.length === 0) {
-                const btn = document.getElementById('add-missing-to-shopping-btn');
-                if (btn) { btn.textContent = 'No missing items detected'; btn.disabled = true; setTimeout(()=>{ btn.textContent='Add Missing → Shopping'; btn.disabled=false; }, 2500); }
-                return;
-            }
-
-            const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-            const existingNames = new Set((window.shoppingList || []).map(i => i.name.trim().toLowerCase()));
-            const additions = missing
-                .map(n => n.trim())
-                .filter(n => n.length > 0 && !existingNames.has(n.toLowerCase()))
-                .map(n => ({ id: genId(), name: n }));
-
-            if (additions.length === 0) {
-                const btn = document.getElementById('add-missing-to-shopping-btn');
-                if (btn) { btn.textContent = 'Already on shopping list'; btn.disabled = true; setTimeout(()=>{ btn.textContent='Add Missing → Shopping'; btn.disabled=false; }, 2500); }
-                return;
-            }
-            const next = [...(window.shoppingList || []), ...additions];
-            window.saveShoppingListToDb(next);
-            const btn = document.getElementById('add-missing-to-shopping-btn');
-            if (btn) { btn.textContent = `Added ${additions.length} item(s)!`; setTimeout(()=>{ btn.textContent='Add Missing → Shopping'; }, 2500); }
-        };
-
-        // --- NEW: RECIPE SEARCH FEATURE ---
-        
-        async function searchSpecificRecipe() {
-            const searchInput = document.getElementById('recipe-search-input');
-            const recipeName = searchInput.value.trim();
-            
-            if (!recipeName) {
-                document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Please enter a recipe name to search.</p>';
-                return;
-            }
-
-            const statusEl = document.getElementById('recipe-generation-status');
-            statusEl.classList.remove('hidden');
-            statusEl.querySelector('p').textContent = `Searching for "${recipeName}"...`;
-            document.getElementById('recipe-list-container').classList.add('opacity-50', 'pointer-events-none');
-            document.getElementById('recipe-detail-view').classList.add('hidden');
-            document.getElementById('recipe-list-view').innerHTML = '';
-
-            const servingsInput = document.getElementById('servings-input');
-            const servingSize = servingsInput ? parseInt(servingsInput.value, 10) : 2;
-            
-            const unitPreference = window.units === 'metric' ?
-                'Use Metric measurements (grams, milliliters, Celsius) for all quantities and temperatures.' :
-                'Use Standard US measurements (ounces, teaspoons, cups, Fahrenheit) for all quantities and temperatures.';
-
-            const inventoryList = window.inventory.map(item => item.name).join(', ');
-            
-            const systemPrompt = `You are a world-class chef and recipe generator. ${unitPreference} The user is searching for a specific recipe: "${recipeName}". Provide exactly 1 complete, detailed recipe for this dish that serves ${servingSize} people. If the user has inventory items, note which ingredients are available and which need to be purchased. List any inventory items from their list that would be consumed when making this recipe in the 'deductibleInventoryStrings' array.`;
-
-            const userQuery = `I want to make "${recipeName}" for ${servingSize} people. ${window.inventory.length > 0 ? `My available inventory: ${inventoryList}. Indicate which ingredients I have and which I need to buy.` : 'Provide a complete ingredient list.'} Output as a JSON array with 1 recipe object matching the provided schema.`;
-            
-            const recipeSchema = {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "recipeName": { "type": "STRING", "description": "The name of the recipe." },
-                        "ingredientsSummary": { "type": "STRING", "description": "A well-formatted, multi-line list of all ingredients. If user has inventory, separate AVAILABLE items from items TO PURCHASE." },
-                        "instructions": { "type": "STRING", "description": "Simple, step-by-step cooking instructions using numbered lists." },
-                        "deductibleInventoryStrings": { 
-                            "type": "ARRAY", 
-                            "description": "Array of inventory item names that would be consumed.",
-                            "items": { "type": "STRING" }
-                        },
-                        "missingIngredients": {
-                            "type": "ARRAY",
-                            "description": "Ingredients not available in user\'s inventory but needed for the recipe. MUST include specific quantities (e.g., '4 eggs', '2 cups flour', '1 lb chicken breast').",
-                            "items": { "type": "STRING" }
-                        }
-                    },
-                    required: ["recipeName", "ingredientsSummary", "instructions", "deductibleInventoryStrings"]
-                }
-            };
-            
-            const payload = {
-                modelName: GEMINI_TEXT_MODEL,
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    // Removed responseMimeType and responseSchema
-                },
             };
 
             try {
-                // *** MODIFIED: Use Firebase Function ***
                 const result = await window.callGemini(payload);
                 const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (responseData) {
                     let parsedJson;
                     try {
-                        const cleaned = responseData
-                            .replace(/^```json\s*/i, '')
-                            .replace(/```\s*$/,'')
-                            .trim();
+                        const cleaned = responseData.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
                         parsedJson = JSON.parse(cleaned);
-                    } catch(e) {
-                        console.error('Failed to parse JSON response from Cloud Function (Search):', responseData, e);
-                        document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Invalid JSON returned by model.</p>';
-                        return;
+                    } catch (e) {
+                        throw new Error("Invalid JSON from AI.");
                     }
-                    
-                    window.latestGeneratedRecipes = parsedJson;
-                    window.renderGeneratedRecipesList();
-                    
-                    // Auto-open the single search result
-                    if (parsedJson.length === 1) {
-                        setTimeout(() => window.viewGeneratedRecipe(0), 100);
-                    }
-                } else {
-                    document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Could not retrieve recipe. Try again.</p>';
-                }
 
+                    window.latestGeneratedRecipes = parsedJson;
+                    renderGeneratedRecipesList();
+                } else {
+                    throw new Error("Empty response from AI.");
+                }
             } catch (error) {
-                console.error('Recipe search failed:', error);
-                document.getElementById('recipe-list-view').innerHTML = `<p class="text-red-500 text-sm font-bold">Error: ${error.message || 'Search failed'}</p>`;
+                app.dialog.alert('Recipe generation failed: ' + error.message, 'Error');
             }
 
-            statusEl.classList.add('hidden');
-            document.getElementById('recipe-list-container').classList.remove('opacity-50', 'pointer-events-none');
-            searchInput.value = '';
+            statusEl.style.display = 'none';
+        };
+
+        function renderGeneratedRecipesList() {
+            const listEl = document.getElementById('recipe-list-view');
+            listEl.innerHTML = '<ul></ul>';
+            const ul = listEl.querySelector('ul');
+
+            window.latestGeneratedRecipes.forEach((recipe, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="#" class="item-link item-content">
+                        <div class="item-inner">
+                            <div class="item-title">${recipe.recipeName}</div>
+                        </div>
+                    </a>
+                `;
+                li.querySelector('a').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    viewGeneratedRecipe(index);
+                });
+                ul.appendChild(li);
+            });
         }
 
-        // --- SCHEDULE FUNCTIONS ---
+        function viewGeneratedRecipe(index) {
+            const recipe = window.latestGeneratedRecipes[index];
+            if (!recipe) return;
 
-        window.renderSchedule = () => {
-            const container = document.getElementById('calendar-container');
-            if (!container) return;
-            console.log('[RenderSchedule] Called. window.mealSchedule keys:', Object.keys(window.mealSchedule));
-            console.log('[RenderSchedule] Full mealSchedule:', JSON.stringify(window.mealSchedule, null, 2));
-            container.innerHTML = '';
+            window.selectedGeneratedRecipeIndex = index;
+            const content = formatRecipeContent(recipe);
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                const dayNum = date.getDate();
-                const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-
-                const scheduled = window.mealSchedule[dateStr];
-                const isToday = i === 0;
-                if (scheduled) {
-                    console.log(`[RenderSchedule] Found schedule for ${dateStr}:`, scheduled.recipeTitle);
-                }
-
-                const dayCard = document.createElement('div');
-                dayCard.className = `border rounded-xl p-4 ${isToday ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-white'} transition hover:shadow-md`;
-                dayCard.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <div>
-                            <span class="text-xs font-semibold ${isToday ? 'text-purple-600' : 'text-gray-500'}">${dayName}</span>
-                            <h3 class="text-lg font-bold text-gray-800">${monthName} ${dayNum}</h3>
-                        </div>
-                        ${isToday ? '<span class="text-xs bg-purple-500 text-white px-2 py-1 rounded-full">Today</span>' : ''}
-                    </div>
-                    ${scheduled ? `
-                        <div class="bg-white border border-gray-200 rounded-lg p-3 mt-2">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-grow min-w-0">
-                                    <p class="font-semibold text-gray-800 text-sm truncate mb-2">🍽️ ${scheduled.recipeTitle}</p>
-                                    <div class="flex gap-2 flex-wrap">
-                                        <button class="text-xs text-indigo-500 hover:text-indigo-700 font-semibold" onclick="viewScheduledRecipe('${dateStr}')">View Details</button>
-                                        <button class="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded font-semibold" onclick="markScheduledRecipeAsMade('${dateStr}')">Mark as Made</button>
-                                    </div>
+            const sheet = app.sheet.create({
+                content: `
+                    <div class="sheet-modal">
+                        <div class="toolbar">
+                            <div class="toolbar-inner">
+                                <div class="left"></div>
+                                <div class="right">
+                                    <a class="link sheet-close">Close</a>
                                 </div>
-                                <button class="text-red-500 hover:text-red-700 ml-2" onclick="removeScheduledRecipe('${dateStr}')">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                </button>
                             </div>
                         </div>
-                    ` : `
-                        <p class="text-gray-400 text-sm italic mt-2">No meal scheduled</p>
-                    `}
-                `;
-                container.appendChild(dayCard);
-            }
-        };
+                        <div class="sheet-modal-inner">
+                            <div class="page-content">
+                                <div class="block-title">${recipe.recipeName}</div>
+                                <div class="block">
+                                    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${content}</pre>
+                                </div>
+                                <div class="block">
+                                    <button class="button button-fill color-green" onclick="window.saveCurrentRecipe()">Save Recipe</button>
+                                    <button class="button button-fill" onclick="window.scheduleRecipeModal()">Schedule</button>
+                                    <button class="button button-fill color-orange" onclick="window.deductInventory()">Mark as Made</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                swipeToClose: true,
+            });
+            sheet.open();
+        }
 
-        window.showScheduleRecipeModal = () => {
+        window.saveCurrentRecipe = async function() {
             if (window.selectedGeneratedRecipeIndex === null) return;
             const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
             if (!recipe) return;
-
-            document.getElementById('schedule-recipe-title').textContent = recipe.recipeName;
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('schedule-date-picker').value = today;
-            document.getElementById('schedule-date-picker').min = today;
-            
-            const maxDate = new Date();
-            maxDate.setDate(maxDate.getDate() + 6);
-            document.getElementById('schedule-date-picker').max = maxDate.toISOString().split('T')[0];
-            
-            document.getElementById('schedule-recipe-modal').classList.remove('hidden');
-        };
-
-        window.hideScheduleRecipeModal = () => {
-            document.getElementById('schedule-recipe-modal').classList.add('hidden');
-        };
-
-        window.confirmScheduleRecipe = () => {
-            if (window.selectedGeneratedRecipeIndex === null) return;
-            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
-            if (!recipe) return;
-
-            const dateStr = document.getElementById('schedule-date-picker').value;
-            if (!dateStr) return;
 
             const content = formatRecipeContent(recipe);
-            window.mealSchedule[dateStr] = {
-                recipeTitle: recipe.recipeName,
-                recipeContent: content,
-                missingIngredients: Array.isArray(recipe.missingIngredients) ? recipe.missingIngredients.slice() : [],
-                deductibleInventoryStrings: Array.isArray(recipe.deductibleInventoryStrings) ? recipe.deductibleInventoryStrings.slice() : []
-            };
-
-            console.log('[ConfirmScheduleRecipe] Scheduling for', dateStr, 'Recipe:', recipe.recipeName);
-            console.log('[ConfirmScheduleRecipe] mealSchedule after add:', JSON.stringify(window.mealSchedule, null, 2));
-            window.saveMealScheduleToDb();
-            // Delayed verification call
-            setTimeout(() => { window.debugFetchMealScheduleDoc && window.debugFetchMealScheduleDoc(); }, 2000);
-            window.hideScheduleRecipeModal();
-
-            const btn = document.getElementById('schedule-recipe-btn');
-            if (btn) {
-                btn.textContent = 'Scheduled!';
-                setTimeout(() => btn.textContent = 'Schedule', 2000);
-            }
+            await window.saveGeneratedRecipeToDb(recipe.recipeName, content);
+            app.toast.create({
+                text: 'Recipe saved!',
+                closeTimeout: 2000,
+            }).open();
         };
 
-        window.removeScheduledRecipe = (dateStr) => {
-            delete window.mealSchedule[dateStr];
-            // Save to Firestore
-            window.saveMealScheduleToDb();
-        };
-
-        window.saveMealScheduleToDb = async () => {
-            if (!window.currentUserId || !window.db) {
-                console.error('[Meal Schedule] Cannot save: userId=', window.currentUserId, 'db available=', !!window.db);
-                return;
-            }
-            const inventoryDocPath = `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`;
-            const inventoryDocRef = window.doc(window.db, inventoryDocPath, 'inventory_list');
-            console.log('[Meal Schedule] Saving to inventory doc:', inventoryDocPath);
-            console.log('[Meal Schedule] Schedule data:', JSON.stringify(window.mealSchedule, null, 2));
+        window.saveGeneratedRecipeToDb = async (title, content) => {
+            if (!window.currentUserId || !window.db) return false;
+            const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+            const recipesCollectionRef = collection(window.db, collectionPath);
             try {
-                await window.setDoc(inventoryDocRef, { schedule: window.mealSchedule }, { merge: true });
-                console.log('[Meal Schedule] ✅ Successfully saved:', Object.keys(window.mealSchedule).length, 'meals');
-            } catch (error) {
-                console.error('[Meal Schedule] ❌ Save failed:', error);
-                console.error('[Meal Schedule] Error details:', error.message, error.code);
-            }
-        };
-
-        window.debugFetchMealScheduleDoc = async () => {
-            if (!window.currentUserId || !window.db) return console.error('[Meal Schedule Debug] Not ready');
-            const inventoryDocRef = window.doc(window.db, `artifacts/${window.appId}/users/${window.currentUserId}/pantry_inventory`, 'inventory_list');
-            try {
-                const i = await window.getDoc(inventoryDocRef);
-                console.log('[Meal Schedule Debug] Inventory doc exists:', i.exists());
-                console.log('[Meal Schedule Debug] Schedule field:', i.exists() ? (i.data().schedule || null) : null);
+                await addDoc(recipesCollectionRef, {
+                    title: title,
+                    content: content,
+                    createdAt: new Date().toISOString()
+                });
+                return true;
             } catch (e) {
-                console.error('[Meal Schedule Debug] Fetch error:', e);
+                console.error("Error saving recipe:", e);
+                return false;
             }
         };
 
-        window.viewScheduledRecipe = (dateStr) => {
-            const scheduled = window.mealSchedule[dateStr];
-            if (!scheduled) return;
-            
-            // Create a temporary modal or alert to show recipe details
-            alert(`Recipe: ${scheduled.recipeTitle}\n\n${scheduled.recipeContent}`);
-        };
+        window.deductInventory = function() {
+            if (window.selectedGeneratedRecipeIndex === null) return;
+            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
 
-        window.markScheduledRecipeAsMade = (dateStr) => {
-            const scheduled = window.mealSchedule[dateStr];
-            if (!scheduled) return;
-            
-            const deductibles = Array.isArray(scheduled.deductibleInventoryStrings) ? scheduled.deductibleInventoryStrings : [];
-            
-            if (deductibles.length === 0) {
-                alert('No inventory items to deduct for this recipe.');
+            if (!recipe || !Array.isArray(recipe.deductibleInventoryStrings)) return;
+
+            const itemsToDeduct = recipe.deductibleInventoryStrings.map(s => normalizeItemName(s));
+
+            if (itemsToDeduct.length === 0) {
+                app.dialog.alert('No items to deduct', 'Info');
                 return;
             }
 
-            const itemsToDeduct = deductibles.map(s => s.trim().toLowerCase());
-            const newInventory = window.inventory.filter(item => {
-                return !itemsToDeduct.includes(item.name.trim().toLowerCase());
-            });
+            let newInventory = JSON.parse(JSON.stringify(window.inventory));
 
-            const itemsRemovedCount = window.inventory.length - newInventory.length;
-            
-            if (itemsRemovedCount > 0) {
-                window.saveInventoryToDb(newInventory);
-                alert(`Marked as made! Removed ${itemsRemovedCount} item(s) from inventory.`);
-            } else {
-                alert('Marked as made! (No inventory items were deducted)');
-            }
-        };
-
-        window.planWeeksShopping = () => {
-            const scheduledDates = Object.keys(window.mealSchedule);
-            if (scheduledDates.length === 0) {
-                const btn = document.getElementById('plan-shopping-btn');
-                if (btn) {
-                    btn.textContent = 'No meals scheduled!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
-                }
-                return;
-            }
-
-            // Extract missing ingredients from scheduled recipes using stored missingIngredients array
-            const allMissingItems = [];
-            scheduledDates.forEach(dateStr => {
-                const scheduled = window.mealSchedule[dateStr];
-                if (scheduled && Array.isArray(scheduled.missingIngredients)) {
-                    allMissingItems.push(...scheduled.missingIngredients);
+            itemsToDeduct.forEach(deductName => {
+                const index = newInventory.findIndex(item => normalizeItemName(item.name) === deductName);
+                if (index !== -1) {
+                    if (newInventory[index].quantity > 1) {
+                        newInventory[index].quantity -= 1;
+                    } else {
+                        newInventory.splice(index, 1);
+                    }
                 }
             });
 
-            if (allMissingItems.length === 0) {
-                const btn = document.getElementById('plan-shopping-btn');
-                if (btn) {
-                    btn.textContent = 'No missing ingredients!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
+            window.saveInventoryToDb(newInventory);
+            app.toast.create({
+                text: 'Inventory updated!',
+                closeTimeout: 2000,
+            }).open();
+        };
+
+        window.scheduleRecipeModal = function() {
+            if (window.selectedGeneratedRecipeIndex === null) return;
+            const recipe = window.latestGeneratedRecipes[window.selectedGeneratedRecipeIndex];
+            if (!recipe) return;
+
+            app.dialog.prompt('Enter date (YYYY-MM-DD):', 'Schedule Recipe', async (date) => {
+                if (!date) return;
+                await scheduleRecipe(recipe.recipeName, formatRecipeContent(recipe), date);
+                app.toast.create({
+                    text: 'Recipe scheduled!',
+                    closeTimeout: 2000,
+                }).open();
+            });
+        };
+
+        async function scheduleRecipe(title, content, date) {
+            if (!window.currentUserId || !window.db) return;
+            const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+            const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+
+            try {
+                const docSnap = await getDoc(scheduleDocRef);
+                let currentSchedule = {};
+                if (docSnap.exists()) {
+                    currentSchedule = docSnap.data().schedule || {};
                 }
-                return;
+
+                currentSchedule[date] = {
+                    recipeTitle: title,
+                    recipeContent: content
+                };
+
+                await setDoc(scheduleDocRef, { schedule: currentSchedule });
+            } catch (e) {
+                console.error("Error scheduling recipe:", e);
             }
+        }
 
-            // Add to shopping list (deduplicate against existing items)
-            const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-            const existingNames = new Set((window.shoppingList || []).map(i => i.name.trim().toLowerCase()));
-            const additions = allMissingItems
-                .map(n => n.trim())
-                .filter(n => n.length > 0 && !existingNames.has(n.toLowerCase()))
-                .map(n => ({ id: genId(), name: n }));
-
-            if (additions.length === 0) {
-                const btn = document.getElementById('plan-shopping-btn');
-                if (btn) {
-                    btn.textContent = 'Already on shopping list!';
-                    setTimeout(() => btn.textContent = "Plan Week's Shopping", 2000);
-                }
-                return;
-            }
-
-            const next = [...(window.shoppingList || []), ...additions];
-            window.saveShoppingListToDb(next);
-
-            const btn = document.getElementById('plan-shopping-btn');
-            if (btn) {
-                btn.textContent = `Added ${additions.length} item(s)!`;
-                setTimeout(() => btn.textContent = "Plan Week's Shopping", 2500);
-            }
+        window.searchRecipes = function() {
+            app.dialog.alert('Recipe search feature coming soon!', 'Feature');
         };
 
     </script>
