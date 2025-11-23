@@ -101,6 +101,8 @@
         <header class="text-center py-4 mb-4">
             <h1 class="text-3xl font-bold text-gray-800">Smart Pantry Chef</h1>
             <p class="text-sm text-gray-500 mt-1" id="user-info">Authenticating...</p>
+            <p class="text-xs text-blue-600 mt-1" id="gemini-status">Testing Gemini API...</p>
+            <button class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded mt-1" onclick="debugGeminiConfig()">Debug API Config</button>
         </header>
 
         <!-- Tab Navigation -->
@@ -869,8 +871,66 @@
         window.latestImageBase64 = null;
         window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
         
-        const GEMINI_VISION_MODEL = "gemini-1.5-flash-latest";
-        const GEMINI_TEXT_MODEL = "gemini-1.5-flash-latest";
+        const GEMINI_VISION_MODEL = "gemini-2.5-pro";
+        const GEMINI_TEXT_MODEL = "gemini-2.5-pro";
+        
+        // --- DEBUG FUNCTIONS ---
+        
+        window.debugGeminiConfig = async () => {
+            console.log('=== GEMINI API DEBUG ===');
+            console.log('Firebase Functions available:', !!window.callGemini);
+            console.log('Current User ID:', window.currentUserId);
+            console.log('Vision Model:', GEMINI_VISION_MODEL);
+            console.log('Text Model:', GEMINI_TEXT_MODEL);
+            
+            const statusEl = document.getElementById('gemini-status');
+            
+            if (!window.callGemini) {
+                console.error('❌ window.callGemini is not initialized');
+                alert('Error: Cloud Function not initialized. Check console for details.');
+                return;
+            }
+            
+            try {
+                statusEl.textContent = '🔍 Testing API key...';
+                statusEl.className = 'text-xs text-blue-600 mt-1';
+                
+                const testPayload = {
+                    modelName: GEMINI_TEXT_MODEL,
+                    contents: [{ parts: [{ text: "Reply with exactly: API_KEY_WORKS" }] }],
+                    generationConfig: { temperature: 0, maxOutputTokens: 20 }
+                };
+                
+                console.log('Sending test request:', testPayload);
+                const result = await window.callGemini(testPayload);
+                console.log('Full response:', result);
+                
+                const response = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                console.log('Extracted text:', response);
+                
+                if (response) {
+                    statusEl.textContent = '✅ API Key Valid - Response: ' + response;
+                    statusEl.className = 'text-xs text-green-600 mt-1';
+                    alert('✅ Gemini API Key is working!\n\nResponse: ' + response + '\n\nCheck console for full details.');
+                } else {
+                    console.warn('⚠️ Empty response from API');
+                    statusEl.textContent = '⚠️ API returned empty response';
+                    statusEl.className = 'text-xs text-yellow-600 mt-1';
+                    alert('⚠️ API responded but returned no content. Check console for details.');
+                }
+            } catch (error) {
+                console.error('❌ Gemini API Test Failed:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    stack: error.stack
+                });
+                statusEl.textContent = '❌ API Key Test Failed';
+                statusEl.className = 'text-xs text-red-600 mt-1';
+                alert('❌ Gemini API Test Failed!\n\nError: ' + error.message + '\n\nCheck console (F12) for full error details.');
+            }
+        };
         
         // --- HELPER FUNCTIONS ---
         
@@ -1343,9 +1403,13 @@
                     if (responseData) {
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            const cleaned = responseData
+                                .replace(/^```json\s*/i, '')
+                                .replace(/```\s*$/,'')
+                                .trim();
+                            parsedJson = JSON.parse(cleaned);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
+                            console.error("Failed to parse JSON response from Cloud Function (Vision):", responseData, e);
                             throw new Error("Cloud Function returned invalid JSON structure.");
                         }
 
@@ -1539,9 +1603,13 @@ ${recipe.instructions}
                     if (responseData) {
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            const cleaned = responseData
+                                .replace(/^```json\s*/i, '')
+                                .replace(/```\s*$/,'')
+                                .trim();
+                            parsedJson = JSON.parse(cleaned);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
+                            console.error("Failed to parse JSON response from Cloud Function (Generate Recipes):", responseData, e);
                             throw new Error("Cloud Function returned invalid JSON structure.");
                         }
                         
@@ -1949,7 +2017,18 @@ ${recipe.instructions}
                 const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (responseData) {
-                    const parsedJson = JSON.parse(responseData);
+                    let parsedJson;
+                    try {
+                        const cleaned = responseData
+                            .replace(/^```json\s*/i, '')
+                            .replace(/```\s*$/,'')
+                            .trim();
+                        parsedJson = JSON.parse(cleaned);
+                    } catch(e) {
+                        console.error('Failed to parse JSON response from Cloud Function (Search):', responseData, e);
+                        document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Invalid JSON returned by model.</p>';
+                        return;
+                    }
                     
                     window.latestGeneratedRecipes = parsedJson;
                     window.renderGeneratedRecipesList();

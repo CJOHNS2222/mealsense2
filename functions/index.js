@@ -6,6 +6,18 @@ const { defineString } = require('firebase-functions/params');
 // Using a new secret name to bypass any potential caching issues.
 const geminiAPIKey = defineString("GEMINI_API_KEY_LATEST");
 
+
+
+const admin = require("firebase-admin");
+
+// Option 1: Auto-initialize (works when deployed to Firebase)
+admin.initializeApp();
+
+// Option 2: Use service account (only if running locally)
+// const serviceAccount = require("./serviceAccountKey.json");
+// admin.initializeApp({
+//   credential: admin.cert(serviceAccount)
+// });
 /**
  * HTTPs function that can handle both text and vision requests to the Gemini API.
  */
