@@ -869,8 +869,8 @@
         window.latestImageBase64 = null;
         window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
         
-        const GEMINI_VISION_MODEL = "gemini-1.5-flash-latest";
-        const GEMINI_TEXT_MODEL = "gemini-1.5-flash-latest";
+        const GEMINI_VISION_MODEL = "gemini-2.5-pro";
+        const GEMINI_TEXT_MODEL = "gemini-2.5-pro";
         
         // --- HELPER FUNCTIONS ---
         
@@ -1320,9 +1320,13 @@
                         }
                     ]
                 }],
-                generationConfig: {
-                    // Removed responseMimeType and responseSchema
+                // Strong instruction to return ONLY JSON matching schema
+                systemInstruction: {
+                    parts: [{
+                        text: "Return ONLY valid minified JSON matching schema {\"detectedIngredients\":[{\"name\":string,\"confidence\":string}]}. No commentary, no markdown, no prefixes."
+                    }]
                 },
+                generationConfig: {},
             };
 
             let success = false;
@@ -1341,15 +1345,48 @@
                     const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                     if (responseData) {
-                        let parsedJson;
-                        try {
-                            parsedJson = JSON.parse(responseData);
-                        } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
-                            throw new Error("Cloud Function returned invalid JSON structure.");
+                        let parsedJson = null;
+                        const raw = (responseData || '').trim();
+
+                        const attemptParse = (text) => {
+                            try { return JSON.parse(text); } catch { return null; }
+                        };
+
+                        // 1. Direct parse
+                        parsedJson = attemptParse(raw);
+
+                        // 2. Extract first/last braces if stray commentary present
+                        if (!parsedJson && raw.includes('{') && raw.includes('}')) {
+                            const first = raw.indexOf('{');
+                            const last = raw.lastIndexOf('}');
+                            parsedJson = attemptParse(raw.substring(first, last + 1));
                         }
 
-                        window.renderDetectedItems(parsedJson.detectedIngredients || []);
+                        // 3. If still not JSON, heuristic: build from lines
+                        if (!parsedJson) {
+                            const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length);
+                            const inferred = [];
+                            lines.forEach(l => {
+                                // Expect patterns like "- Apple" or "Apple (High)"
+                                const m = l.match(/[-*]?\s*(.+?)(?:\s*\((High|Medium|Low)\))?$/i);
+                                if (m) {
+                                    inferred.push({
+                                        name: m[1].replace(/^[-*]\s*/, '').trim(),
+                                        confidence: (m[2] || 'Medium')
+                                    });
+                                }
+                            });
+                            if (inferred.length) {
+                                parsedJson = { detectedIngredients: inferred };
+                            }
+                        }
+
+                        if (!parsedJson || !Array.isArray(parsedJson.detectedIngredients)) {
+                            console.error('Gemini Vision response not valid JSON schema. Raw response:', raw);
+                            throw new Error('Vision response was not valid JSON.');
+                        }
+
+                        window.renderDetectedItems(parsedJson.detectedIngredients);
                         success = true;
                     } else {
                         console.error("Cloud Function returned an empty or invalid response:", result);
