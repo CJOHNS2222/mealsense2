@@ -871,8 +871,8 @@
         window.latestImageBase64 = null;
         window.mealSchedule = {}; // { 'YYYY-MM-DD': { recipeTitle, recipeContent } }
         
-        const GEMINI_VISION_MODEL = "gemini-1.5-flash-latest";
-        const GEMINI_TEXT_MODEL = "gemini-1.5-flash-latest";
+        const GEMINI_VISION_MODEL = "gemini-2.5-pro";
+        const GEMINI_TEXT_MODEL = "gemini-2.5-pro";
         
         // --- DEBUG FUNCTIONS ---
         
@@ -1403,9 +1403,13 @@
                     if (responseData) {
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            const cleaned = responseData
+                                .replace(/^```json\s*/i, '')
+                                .replace(/```\s*$/,'')
+                                .trim();
+                            parsedJson = JSON.parse(cleaned);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
+                            console.error("Failed to parse JSON response from Cloud Function (Vision):", responseData, e);
                             throw new Error("Cloud Function returned invalid JSON structure.");
                         }
 
@@ -1599,9 +1603,13 @@ ${recipe.instructions}
                     if (responseData) {
                         let parsedJson;
                         try {
-                            parsedJson = JSON.parse(responseData);
+                            const cleaned = responseData
+                                .replace(/^```json\s*/i, '')
+                                .replace(/```\s*$/,'')
+                                .trim();
+                            parsedJson = JSON.parse(cleaned);
                         } catch (e) {
-                            console.error("Failed to parse JSON response from Cloud Function:", responseData, e);
+                            console.error("Failed to parse JSON response from Cloud Function (Generate Recipes):", responseData, e);
                             throw new Error("Cloud Function returned invalid JSON structure.");
                         }
                         
@@ -2009,7 +2017,18 @@ ${recipe.instructions}
                 const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (responseData) {
-                    const parsedJson = JSON.parse(responseData);
+                    let parsedJson;
+                    try {
+                        const cleaned = responseData
+                            .replace(/^```json\s*/i, '')
+                            .replace(/```\s*$/,'')
+                            .trim();
+                        parsedJson = JSON.parse(cleaned);
+                    } catch(e) {
+                        console.error('Failed to parse JSON response from Cloud Function (Search):', responseData, e);
+                        document.getElementById('recipe-list-view').innerHTML = '<p class="text-red-500 text-sm">Error: Invalid JSON returned by model.</p>';
+                        return;
+                    }
                     
                     window.latestGeneratedRecipes = parsedJson;
                     window.renderGeneratedRecipesList();
