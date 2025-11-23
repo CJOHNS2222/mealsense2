@@ -13,7 +13,16 @@
           "package_name": "com.MealSense2.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "89889306830-qae9d79sjju157of683c1ppnjk2jefhg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.MealSense2.app",
+            "certificate_hash": "02e3aa60d5837796712b863a1ceb801a72da6a4c"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAQV9yO6PodGE8-_kY4yeeVY-0wUjBTfXI"
