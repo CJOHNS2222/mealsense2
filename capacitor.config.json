@@ -1,6 +1,6 @@
 {
   "appId": "com.MealSense2.app",
-  "appName": "Meal Sense",
+  "appName": "Meal Sense 2",
   "webDir": "www",
   "bundledWebRuntime": false,
   "plugins": {
