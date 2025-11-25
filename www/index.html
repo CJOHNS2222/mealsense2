@@ -8,63 +8,68 @@
     <title>Meal Sense 2</title>
     
     <!-- Framework7 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@8/framework7-bundle.min.css">
-    
-    <!-- Custom styles -->
+     <style lang="css">
+        @import '/mealsense2/framework.css';
+    </style>
     <style>
         :root {
-            --f7-theme-color: #6366f1;
+            --f7-theme-color: #44130e;
             --f7-theme-color-rgb: 99, 102, 241;
-            --f7-theme-color-shade: #4f46e5;
-            --f7-theme-color-tint: #818cf8;
+            --f7-theme-color-shade: #44130e
+            --f7-theme-color-tint: #44130e
             --f7-safe-area-left: 0px;
             --f7-safe-area-right: 0px;
             /* App background color (tuned to image red) */
-            --app-bg-color: #dc2626;
+            --app-bg-color: #44130e;
         }
         
         .item-thumbnail {
             width: 48px;
             height: 48px;
-            border-radius: 8px;
-            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #e5e7eb;
+            border: 0px solid #44130e;
+            background: #44130e;
+            border-radius: 0px;
         }
         
         .item-thumbnail img {
             width: 48px;
             height: 48px;
             object-fit: contain;
+            border: 0px solid #44130e;
+            background: #44130e;
+            border-radius: 0px;
         }
         
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
         
         .quantity-btn {
             width: 28px;
             height: 28px;
-            border-radius: 0px;
-            background: #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 16px;
             color: #374151;
-            border: none;
+            border: 0px solid #44130e;
+            background: #44130e;
+            border-radius: 0px;
         }
         .quantity-btn img {
-            width: 16px;
-            height: 16px;
+            width: 28px;
+            height: 28px;
             object-fit: contain;
             display: block;
-            border: none;
+            border: 0px none #44130e;
+            background: #44130e;
+            border-radius: 0px;
         }
         
         .button img {
@@ -86,11 +91,12 @@
             height: 100%;
             width: 100%;
             object-fit: cover;
+            vertical-align: middle;
             border: none;
         }
         
         .button-outline {
-            border: 1px solid currentColor;
+            border: 0px solid currentColor;
         }
         
         .button-outline img {
@@ -126,18 +132,18 @@
         .scan-preview-box {
             width: 100%;
             height: 200px;
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed #44130e;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f8fafc;
+            background: #808080;
         }
         
         .scan-preview-img {
             max-width: 100%;
             max-height: 100%;
-            border-radius: 8px;
+            border-radius: 0px;
         }
 
         /* Apply red background across main containers */
@@ -145,75 +151,94 @@
         .view,
         .page,
         .page-content {
-            background-color: var(--app-bg-color) !important;
+            background-color: #44130e !important;
+        }
+        /* Override all Framework7 buttons background */
+        .button,
+        .button.button-fill {
+            background-color: #44130e !important;
+        }
+        /* Specific generate recipe button background */
+        #generate-recipe-btn {
+            background-color: #44130e !important;
+        }
+        
+        /* Tab visibility */
+        .tab {
+            display: none;
+        }
+        
+        .tab.tab-active {
+            display: block;
         }
     </style>
-</head>
+        
+        </head>
 <body>
-    <div id="app">
+    <div id="app" class="framework7-root">
         <!-- Main View -->
         <div class="view view-main view-init safe-areas" data-master-detail-breakpoint="768">
             <!-- Top Navbar -->
             <div class="navbar">
-                <div class="navbar-bg"></div>
-                <div class="navbar-inner">
-                    <div class="title">Meal Sense 2</div>
+                <div style="background-color: #44130e;"></div>
+                <div class="navbar-inner" style="background-color: #44130e;">
+                    <div class="title">Smart Pantry Chef</div>
                 </div>
             </div>
             
             <!-- Toolbar/Tabs -->
-            <div class="toolbar toolbar-bottom tabbar">
-                <div class="toolbar-inner">
+            <div class="toolbar toolbar-bottom tabbar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;">
+                <div class="toolbar-inner" style="display: flex; justify-content: space-around; align-items: center;">
                     <a href="#tab-inventory" class="tab-link tab-link-active">
-                        <i class="icon"><img src="img/inventory.jpg" alt="Inventory" style="width: 45px; height: 38px;"></i>
+                        <i class="icon" style="width: 100px; height: 45px;"><img src="img/inventory.jpg" alt="Inventory" style="width: 100%; height: 60px;"></i>
                     </a>
                     <a href="#tab-recipes" class="tab-link">
-                        <i class="icon"><img src="img/recipes.jpg" alt="Recipes" style="width: 45px; height: 38px;"></i>
+                        <i class="icon" style="width: 100px; height: 45px;"><img src="img/recipes.jpg" alt="Recipes" style="width: 100%; height: 60px;"></i>
                     </a>
                     <a href="#tab-schedule" class="tab-link">
-                        <i class="icon"><img src="img/schedule.jpg" alt="Schedule" style="width: 45px; height: 38px;"></i>
+                        <i class="icon" style="width: 100px; height: 45px;"><img src="img/schedule.jpg" alt="Schedule" style="width: 100%; height: 60px;"></i>
                     </a>
                     <a href="#tab-shopping" class="tab-link">
-                        <i class="icon"><img src="img/shopping.jpg" alt="Shopping" style="width: 45px; height: 38px;"></i>
+                        <i class="icon" style="width: 100px; height: 45px;"><img src="img/shopping.jpg" alt="Shopping" style="width: 100%; height: 60px;"></i>
                     </a>
-                </div>
+                <span class="tab-link-highlight ai-style-change-1" style="width: 25%; transform: translate3d(0%, 0px, 0px);"></span></div>
             </div>
             
             <!-- Page content with tabs -->
-            <div class="page">
-                <div class="tabs">
-                    <!-- Inventory Tab -->
-                    <div id="tab-inventory" class="tab tab-active page-content">
+            <div class="page page-current">
+                <div class="page-content">
+                    <div class="tabs">
+                        <!-- Inventory Tab -->
+                        <div id="tab-inventory" class="tab tab-active">
                         <!-- Scanner Section -->
-                        <div class="block-title">Scanner</div>
-                        <div class="card">
+                        <div class="card" style="color: #44130e;">
                             <div class="card-content card-content-padding">
-                                <div id="scan-preview-container" class="scan-preview-box">
+                                <div id="scan-preview-container" style="color: #44130e;" class="scan-preview-box">
                                     <div id="scan-placeholder">
-                                        <i class="f7-icons" style="font-size: 48px; color: #94a3b8;">camera</i>
-                                        <p style="color: #64748b; margin-top: 8px;">No image selected</p>
+                                        <i class="f7-icons" style="font-size: 48px; color: #000000;">camera</i>
+                                        <p style="color: #000000; font-weight: bold; margin-top: 8px;">No image selected</p>
                                     </div>
                                     <img id="scan-preview" class="scan-preview-img" style="display: none;">
                                 </div>
-                                <div class="row" style="margin-top: 16px;">
-                                    <div class="col-50">
-                                        <label class="button button-fill button-small" style="cursor: pointer;">
-                                            <img src="img/scanimage.jpg" alt="Camera Capture">
-                                            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-                                        </label>
-                                    </div>
-                                    <div class="col-50">
-                                        <label class="button[disabled]" style="cursor: pointer;">
-                                            <img src="img/photogallery.jpg" alt="Gallery">
-                                            <input type="file" id="file-input" accept="image/*" style="display: none;">
-                                        </label>
-                                    </div>
+                                <div style="color: #44130e; text-align: center;">
+                                    <label style="cursor: pointer; display: inline-block;">
+                                        <img src="img/scanimage.jpg" style="vertical-align: middle; height: 50px;" alt="Camera Capture">
+                                        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                                    </label>
+                                    <label class="button[disabled]" style="cursor: pointer; display: inline-block;">
+                                        <img src="img/photogallery.jpg" style="vertical-align: middle; height: 50px;" alt="Gallery">
+                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                    </label>
+                                    <label class="button[disabled]" style="cursor: pointer; display: inline-block;">
+                                        <img src="img/analyze.jpg" style="vertical-align: middle; height: 50px;" alt="Scan Image">
+                                    </label>
                                 </div>
-                                <button id="process-scan-btn" class="button button-small button-fill img" disabled style="margin-top: 12px; border: none;">
-                                    <img src="img/scanimage.jpg" alt="Scan Image">
-                                </button>
                                 <div id="scan-status" class="text-align-center" style="display: none; margin-top: 16px;">
-                                    <div class="preloader"></div>
+                                    <div class="preloader"><span class="preloader-inner">
+    <svg viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="16"></circle>
+    </svg>
+  </span></div>
                                     <p id="scan-status-text" style="margin-top: 8px; color: #6366f1;">Analyzing...</p>
                                 </div>
                                 <div id="scan-error" class="block-footer" style="display: none; color: #ef4444; margin-top: 12px;"></div>
@@ -235,35 +260,23 @@
                         
                         <!-- Manual Add -->
                         <div class="block-title">Add Item Manually</div>
-                        <div class="list no-hairlines-md">
-                            <ul>
-                                <li class="item-content item-input">
-                                    <div class="item-inner">
-                                        <div class="item-input-wrap">
-                                            <input type="text" id="manual-item-input" placeholder="Item name">
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="item-content item-input">
-                                    <div class="item-inner">
-                                        <div class="item-input-wrap">
-                                            <input type="date" id="manual-expiry-input" placeholder="Expiry date (optional)">
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
+                        <div class="block" style="padding: 0 16px;">
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <input type="text" id="manual-item-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Item name">
+                                <input type="date" id="manual-expiry-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Expiry date (optional)">
+                            </div>
                         </div>
-                        <div class="block">
+                        <div class="block" style="text-align: center;">
                             <button class="button button-fill" onclick="window.addManualItem()">
-                                <img src="img/addtopantry.jpg" alt="Add Item">
+                                <img src="img/addtopantry.jpg" style="height: 50px;" alt="Add Item">
                             </button>
                         </div>
                         
                         <!-- Inventory List -->
-                        <div class="block-title">
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">
                             Your Inventory <span id="item-count" style="color: #6b7280;">(0 items)</span>
                         </div>
-                        <div id="inventory-placeholder" class="block text-align-center" style="color: #9ca3af;">
+                        <div id="inventory-placeholder" class="block text-align-center" style="color: rgb(156, 163, 175); display: block;">
                             <i class="f7-icons" style="font-size: 64px; color: #d1d5db;">cube_box</i>
                             <p>No items in inventory</p>
                         </div>
@@ -272,25 +285,19 @@
                         </div>
                         
                         <!-- Delete Controls -->
-                        <div id="delete-controls" class="block" style="display: none;">
-                            <div class="row">
-                                <div class="col-50">
-                                    <button class="button[disabled]" onclick="window.deleteSelectedItems()">
-                                        <img src="img/delete.jpg" alt="Delete">
-                                    </button>
-                                </div>
-                                <div class="col-50">
-                                    <button class="button" onclick="window.removeAllItems()">
-                                        <img src="img/removeall.jpg" alt="Clear All">
-                                    </button>
-                                </div>
-                            </div>
+                        <div id="delete-controls" class="block" style="border:none; display: none; text-align: center;">
+                            <button onclick="window.deleteSelectedItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
+                                <img src="img/delete.jpg" style="height: 60px;" alt="Delete">
+                            </button>
+                            <button class="button" onclick="window.removeAllItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
+                                <img src="img/removeall.jpg" style="height: 60px;" alt="Clear All">
+                            </button>
                         </div>
                     </div>
                     
                     <!-- Recipes Tab -->
-                    <div id="tab-recipes" class="tab page-content">
-                        <div class="block-title">Recipe Search</div>
+                    <div id="tab-recipes" class="tab">
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Recipe Search</div>
                         <div class="card">
                             <div class="card-content card-content-padding">
                                 <div class="list no-hairlines-md">
@@ -298,36 +305,36 @@
                                         <li class="item-content item-input">
                                             <div class="item-inner">
                                                 <div class="item-input-wrap">
-                                                    <input type="text" id="recipe-search-input" placeholder="Search for recipes...">
+                                                    <input type="text" id="recipe-search-input" placeholder="Search for recipes..." style="font-size: 16px; font-weight: bold; padding: 12px;">
                                                 </div>
                                             </div>
                                         </li>
                                     </ul>
                                 </div>
-                                <button class="button button-fill" onclick="searchRecipes()">
-                                    <img src="img/searchforrecipe.jpg" alt="Search Recipes">
+                                <button class="button button-fill" onclick="searchRecipes()" style="height: 60px;">
+                                    <img src="img/searchforrecipe.jpg" alt="Search Recipes" style="height: 50px;">
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="block-title">Generate from Inventory</div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Generate from Inventory</div>
                         <div class="card">
                             <div class="card-content card-content-padding">
                                 <div class="list no-hairlines-md">
                                     <ul>
-                                        <li class="item-content item-input">
+                                        <li class="item-content item-input item-input-with-value">
                                             <div class="item-inner">
-                                                <div class="item-title item-label">Max Cook Time</div>
+                                                <div class="item-title item-label" style="font-size: 18px; font-weight: bold;">Max Cook Time</div>
                                                 <div class="item-input-wrap">
-                                                    <input type="number" id="max-cook-time" value="60" min="10" max="240">
+                                                    <input type="number" id="max-cook-time" value="60" min="10" max="240" class="input-with-value" style="font-size: 16px; font-weight: bold;">
                                                 </div>
                                             </div>
                                         </li>
-                                        <li class="item-content item-input">
+                                        <li class="item-content item-input item-input-with-value">
                                             <div class="item-inner">
-                                                <div class="item-title item-label">Max Ingredients</div>
+                                                <div class="item-title item-label" style="font-size: 18px; font-weight: bold;">Max Ingredients</div>
                                                 <div class="item-input-wrap">
-                                                    <input type="number" id="max-ingredients" value="10" min="3" max="20">
+                                                    <input type="number" id="max-ingredients" value="10" min="3" max="20" class="input-with-value" style="font-size: 16px; font-weight: bold;">
                                                 </div>
                                             </div>
                                         </li>
@@ -336,21 +343,25 @@
                                                 <input type="checkbox" id="allow-missing-ingredients">
                                                 <i class="icon icon-checkbox"></i>
                                                 <div class="item-inner">
-                                                    <div class="item-title">Allow missing ingredients</div>
+                                                    <div class="item-title" style="font-size: 18px; font-weight: bold;">Allow missing ingredients</div>
                                                 </div>
                                             </label>
                                         </li>
                                     </ul>
                                 </div>
-                                <div class="segmented segmented-strong">
-                                    <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')"><img src="img/metric.jpg" alt="Metric"></button>
-                                    <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')"><img src="img/standard.jpg" alt="Standard"></button>
+                                <div class="segmented segmented-strong" style="margin-top: 16px;">
+                                    <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 60px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 50px;"></button>
+                                    <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 60px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 50px;"></button>
                                 </div>
-                                <button id="generate-recipe-btn" class="button button-fill button-large" onclick="generateRecipes()" style="margin-top: 16px;">
-                                    <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes">
+                                <button id="generate-recipe-btn" class="button button-fill button-large" onclick="generateRecipes()" style="margin-top: 16px; height: 70px;">
+                                    <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes" style="height: 60px;">
                                 </button>
                                 <div id="recipe-generation-status" style="display: none; margin-top: 16px; text-align: center;">
-                                    <div class="preloader"></div>
+                                    <div class="preloader"><span class="preloader-inner">
+    <svg viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="16"></circle>
+    </svg>
+  </span></div>
                                     <p style="margin-top: 8px; color: #6366f1;">Consulting the Smart Chef...</p>
                                 </div>
                             </div>
@@ -361,18 +372,18 @@
                         <div id="recipe-detail-view" style="display: none;"></div>
                         
                         <!-- Saved Recipes -->
-                        <div class="block-title">Saved Recipes</div>
-                        <div id="saved-recipes-list" class="list media-list"></div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Saved Recipes</div>
+                        <div id="saved-recipes-list" class="list media-list"><ul></ul></div>
                     </div>
                     
                     <!-- Schedule Tab -->
-                    <div id="tab-schedule" class="tab page-content">
-                        <div class="block-title">Meal Schedule</div>
-                        <div id="calendar-container"></div>
+                    <div id="tab-schedule" class="tab">
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Meal Schedule</div>
+                        <div id="calendar-container" style="padding: 16px;"></div>
                     </div>
                     
                     <!-- Shopping Tab -->
-                    <div id="tab-shopping" class="tab page-content">
+                    <div id="tab-shopping" class="tab">
                         <div class="block-title">Shopping List</div>
                         <div class="list no-hairlines-md">
                             <ul>
@@ -390,8 +401,9 @@
                                 <img src="img/addtolist.jpg" alt="Add Item">
                             </button>
                         </div>
-                        <div id="shopping-list" class="list"></div>
+                        <div id="shopping-list" class="list"><ul></ul></div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -699,54 +711,63 @@
             if (placeholder) placeholder.style.display = window.inventory.length > 0 ? 'none' : 'block';
             if (deleteControls) deleteControls.style.display = window.inventory.length > 0 ? 'block' : 'none';
 
+            // Create a grid container
+            const gridContainer = document.createElement('div');
+            gridContainer.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px;';
+
             sortedInventory.forEach((item) => {
                 const isExpired = item.expiry && isExpiredToday(item.expiry);
                 const isExpiringSoon = item.expiry && isWithinDays(item.expiry, 3);
                 const selected = window.selectedInventoryIds.has(item.id);
 
                 let expiryText = '';
-                let itemClass = '';
+                let itemBgColor = '';
 
                 if (isExpired) {
                     expiryText = '<span style="color: #dc2626; font-weight: bold;">EXPIRED</span>';
-                    itemClass = 'expired-item';
+                    itemBgColor = '#fee2e2';
                 } else if (isExpiringSoon) {
                     expiryText = `<span style="color: #f59e0b; font-weight: bold;">Expires in ${getDateDifferenceInDays(item.expiry)} days</span>`;
-                    itemClass = 'expiring-soon-item';
+                    itemBgColor = '#fef3c7';
                 } else if (item.expiry) {
                     expiryText = `<span style="color: #10b981;">Until ${item.expiry}</span>`;
                 }
 
-                const li = document.createElement('li');
-                li.className = itemClass;
-                li.innerHTML = `
-                    <label class="item-checkbox item-content">
-                        <input type="checkbox" ${selected ? 'checked' : ''} onchange="window.toggleInventorySelection('${item.id}')">
-                        <i class="icon icon-checkbox"></i>
-                        <div class="item-media">
-                            <div class="item-thumbnail">
-                                <img src="${getItemImage(item.name)}" alt="${item.name}">
-                            </div>
+                const itemDiv = document.createElement('div');
+                itemDiv.style.cssText = `background: ${itemBgColor}; padding: 8px; border-radius: 4px; border: 1px solid #ddd;`;
+                itemDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <input type="checkbox" ${selected ? 'checked' : ''} onchange="window.toggleInventorySelection('${item.id}')" style="flex-shrink: 0;">
+                        <div style="width: 40px; height: 40px; flex-shrink: 0;">
+                            <img src="${getItemImage(item.name)}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: contain;">
                         </div>
-                        <div class="item-inner">
-                            <div class="item-title-row">
-                                <div class="item-title">${item.name}</div>
-                            </div>
-                            <div class="item-subtitle">${expiryText || 'No expiry set'}</div>
-                            <div class="item-text" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                                <div class="quantity-controls">
-                                    <a class="quantity-btn" onclick="event.preventDefault(); event.stopPropagation(); window.adjustQuantity('${item.id}', -1)"><img src="img/quantity-btn-down.jpg" alt="Decrease quantity"></a>
-                                    <span class="quantity-value">${item.quantity || 1}</span>
-                                    <a class="quantity-btn" onclick="event.preventDefault(); event.stopPropagation(); window.adjustQuantity('${item.id}', 1)"><img src="img/quantity-btn-up.jpg" alt="Increase quantity"></a>
-                                </div>
-                                <a class="button button-small button-outline" onclick="event.preventDefault(); event.stopPropagation(); window.showEditItemNameModal('${item.id}')"><img src="img/edit.jpg" alt="Edit"></a>
-                                <a class="button button-small button-outline" onclick="event.preventDefault(); event.stopPropagation(); window.showEditExpiryModal('${item.id}', '${item.name}')"><img src="img/date.jpg" alt="Date"></a>
-                            </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: bold; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</div>
+                            <div style="font-size: 12px;">${expiryText || 'No expiry'}</div>
                         </div>
-                    </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 2px;">
+                            <a onclick="event.preventDefault(); window.adjustQuantity('${item.id}', -1)" style="cursor: pointer;">
+                                <img src="img/quantity-btn-down.jpg" alt="-" style="height: 24px;">
+                            </a>
+                            <span style="min-width: 20px; text-align: center; font-weight: 600; font-size: 14px;">${item.quantity || 1}</span>
+                            <a onclick="event.preventDefault(); window.adjustQuantity('${item.id}', 1)" style="cursor: pointer;">
+                                <img src="img/quantity-btn-up.jpg" alt="+" style="height: 24px;">
+                            </a>
+                        </div>
+                        <a onclick="event.preventDefault(); window.showEditItemNameModal('${item.id}')" style="cursor: pointer;">
+                            <img src="img/edit.jpg" alt="Edit" style="height: 20px;">
+                        </a>
+                        <a onclick="event.preventDefault(); window.showEditExpiryModal('${item.id}', '${item.name}')" style="cursor: pointer;">
+                            <img src="img/date.jpg" alt="Date" style="height: 20px;">
+                        </a>
+                    </div>
                 `;
-                listEl.appendChild(li);
+                gridContainer.appendChild(itemDiv);
             });
+
+            listEl.appendChild(gridContainer);
 
             const deleteBtn = document.getElementById('delete-selected-btn');
             if (deleteBtn) {
@@ -800,23 +821,82 @@
         window.renderSchedule = () => {
             const container = document.getElementById('calendar-container');
             if (!container) return;
-            container.innerHTML = '<div class="list"><ul></ul></div>';
-            const ul = container.querySelector('ul');
             
-            const dates = Object.keys(window.mealSchedule).sort();
-            dates.forEach(date => {
-                const meal = window.mealSchedule[date];
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="item-content">
-                        <div class="item-inner">
-                            <div class="item-title">${date}</div>
-                            <div class="item-subtitle">${meal.recipeTitle}</div>
-                        </div>
+            // Get today and next 6 days
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const dayName = dayNames[date.getDay()];
+                
+                const scheduled = window.mealSchedule[dateStr];
+                const recipeTitle = scheduled ? scheduled.recipeTitle : 'No meal planned';
+                
+                const dayBox = document.createElement('div');
+                dayBox.style.cssText = 'margin-bottom: 12px; cursor: pointer;';
+                dayBox.innerHTML = `
+                    <img src="img/schedulebox.jpg" alt="${dayName}" style="width: 100%; display: block; border-radius: 8px;">
+                    <div style="position: relative; margin-top: -80px; padding: 16px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">
+                        <div style="font-size: 20px; font-weight: bold;">${dayName}</div>
+                        <div style="font-size: 16px; margin-top: 4px;">${dateStr}</div>
+                        <div style="font-size: 14px; margin-top: 8px; font-style: italic;">${recipeTitle}</div>
                     </div>
                 `;
-                ul.appendChild(li);
-            });
+                
+                dayBox.addEventListener('click', () => {
+                    window.showScheduleModal(dateStr, dayName);
+                });
+                
+                container.appendChild(dayBox);
+            }
+        };
+        
+        window.showScheduleModal = (dateStr, dayName) => {
+            const scheduled = window.mealSchedule[dateStr];
+            const currentRecipe = scheduled ? scheduled.recipeTitle : '';
+            
+            app.dialog.prompt(
+                `Enter recipe for ${dayName} (${dateStr}):`,
+                'Schedule Meal',
+                async (recipeTitle) => {
+                    if (!recipeTitle || !recipeTitle.trim()) return;
+                    
+                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                    const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                    
+                    try {
+                        const docSnap = await getDoc(scheduleDocRef);
+                        let currentSchedule = {};
+                        if (docSnap.exists()) {
+                            currentSchedule = docSnap.data().schedule || {};
+                        }
+                        
+                        currentSchedule[dateStr] = {
+                            recipeTitle: recipeTitle.trim(),
+                            date: dateStr
+                        };
+                        
+                        await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                        
+                        app.toast.create({
+                            text: 'Meal scheduled!',
+                            closeTimeout: 2000,
+                        }).open();
+                    } catch (e) {
+                        console.error('Error scheduling meal:', e);
+                        app.dialog.alert('Failed to schedule meal', 'Error');
+                    }
+                },
+                () => {},
+                currentRecipe
+            );
         };
 
         // Inventory CRUD
@@ -1370,5 +1450,8 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
         };
 
     </script>
+
+
+</div>
 </body>
 </html>
