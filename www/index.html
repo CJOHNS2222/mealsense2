@@ -145,6 +145,15 @@
             max-height: 100%;
             border-radius: 0px;
         }
+        
+        /* Hide Framework7 dialog elements that might appear incorrectly */
+        .dialog:not(.modal-in) {
+            display: none !important;
+        }
+        
+        .dialog-backdrop:not(.backdrop-in) {
+            display: none !important;
+        }
 
         /* Apply red background across main containers */
         body,
@@ -153,6 +162,9 @@
         .page-content {
             background-color: #44130e !important;
             color: #9ca3af !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin: 0 !important;
         }
         /* Override all Framework7 buttons background */
         .button,
@@ -162,6 +174,23 @@
         /* Specific generate recipe button background */
         #generate-recipe-btn {
             background-color: #44130e !important;
+        }
+        
+        /* Hide preloader circles */
+        .preloader,
+        .preloader svg,
+        .preloader circle {
+            display: none !important;
+        }
+        
+        /* Sheet modal fixes */
+        .sheet-modal {
+            z-index: 10000 !important;
+        }
+        
+        .sheet-modal-inner {
+            overflow-y: auto !important;
+            padding-bottom: 30px !important;
         }
         
         /* Tab visibility */
@@ -180,7 +209,7 @@
         <!-- Main View -->
         <div class="view view-main view-init safe-areas" data-master-detail-breakpoint="768">
             <!-- Top Navbar -->
-            <div class="navbar">
+            <div class="navbar" style="display: none;">
                 <div style="background-color: #44130e;"></div>
                 <div class="navbar-inner" style="background-color: #44130e;">
                     <div class="title">Smart Pantry Chef</div>
@@ -188,8 +217,8 @@
             </div>
             
             <!-- Toolbar/Tabs -->
-            <div class="toolbar toolbar-bottom tabbar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 500; height: 123px; padding-bottom: 40px; box-sizing: border-box;">
-                <div class="toolbar-inner" style="display: flex; justify-content: space-around; align-items: center; height: 100%;">
+            <div class="toolbar toolbar-bottom tabbar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; height: 123px; padding: 0 10px 40px 10px; box-sizing: border-box; background-color: #44130e;">
+                <div class="toolbar-inner" style="display: flex; justify-content: space-around; align-items: center; height: 100%; padding: 0;">
                     <a href="#tab-inventory" class="tab-link tab-link-active">
                         <i class="icon" style="width: 138px; height: 62px;"><img src="img/inventory.jpg" alt="Inventory" style="width: 100%; height: 83px;"></i>
                     </a>
@@ -206,11 +235,13 @@
             </div>
             
             <!-- Page content with tabs -->
-            <div class="page page-current">
-                <div class="page-content" style="padding-top: 80px; padding-bottom: 123px;">
+            <div class="page page-current" style="overflow-y: auto; height: calc(100vh - 123px);">
+                <div class="page-content" style="padding-top: env(safe-area-inset-top, 20px); padding-bottom: 20px; overflow-x: hidden;">
                     <div class="tabs">
                         <!-- Inventory Tab -->
                         <div id="tab-inventory" class="tab tab-active">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="inventory" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: block; z-index: 9998;">
+                        <div style="height: 75px;"></div>
                         <!-- Scanner Section -->
                         <div class="card" style="color: #44130e;">
                             <div class="card-content card-content-padding">
@@ -260,7 +291,7 @@
                         </div>
                         
                         <!-- Manual Add -->
-                        <div class="block-title" style="margin-top: 32px; font-size: 20px; font-weight: bold;">Add Item Manually</div>
+                        <div class="block-title" style="margin-top: 32px; font-size: 20px; font-weight: bold; text-align: center;">Add Item Manually</div>
                         <div class="block" style="padding: 0 16px;">
                             <div style="display: flex; gap: 8px; width: 100%;">
                                 <input type="text" id="manual-item-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Item name">
@@ -281,8 +312,8 @@
                             <i class="f7-icons" style="font-size: 64px; color: #d1d5db;">cube_box</i>
                             <p>No items in inventory</p>
                         </div>
-                        <div class="list media-list" id="inventory-list-container">
-                            <ul id="inventory-list"></ul>
+                        <div class="list media-list" id="inventory-list-container" style="margin: 0;">
+                            <ul id="inventory-list" style="margin: 0; padding: 0;"></ul>
                         </div>
                         
                         <!-- Delete Controls -->
@@ -298,6 +329,8 @@
                     
                     <!-- Recipes Tab -->
                     <div id="tab-recipes" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="recipes" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
                         <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center;">Recipe Search</div>
                         <div class="card" style="border: 2px solid #44130e; margin: 8px;">
                             <div class="card-content card-content-padding">
@@ -313,7 +346,7 @@
                         <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 32px;">Generate from Inventory</div>
                         <div class="card" style="border: 2px solid #44130e; margin: 8px;">
                             <div class="card-content card-content-padding">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                                     <div>
                                         <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Cook Time</label>
                                         <input type="number" id="max-cook-time" value="60" min="10" max="240" style="width: 100%; font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
@@ -322,18 +355,22 @@
                                         <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Ingredients</label>
                                         <input type="number" id="max-ingredients" value="10" min="3" max="20" style="width: 100%; font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                                     </div>
+                                    <div>
+                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Dietary Restrictions</label>
+                                        <input type="text" id="dietary-restrictions" placeholder="e.g., vegetarian" style="width: 100%; font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
                                 </div>
-                                <label style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold; margin-bottom: 16px;">
-                                    <input type="checkbox" id="allow-missing-ingredients">
-                                    <span>Allow missing ingredients</span>
-                                </label>
-                                <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 16px;">
-                                    <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 60px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 50px;"></button>
-                                    <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 60px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 50px;"></button>
-                                </div>
-                                <div style="display: flex; justify-content: center;">
-                                    <button id="generate-recipe-btn" class="button button-fill button-large" onclick="window.generateRecipes()" style="height: 70px;">
-                                        <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes" style="height: 60px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold;">
+                                        <input type="checkbox" id="allow-missing-ingredients">
+                                        <span>Allow missing ingredients</span>
+                                    </label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 50px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 40px;"></button>
+                                        <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 50px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 40px;"></button>
+                                    </div>
+                                    <button id="generate-recipe-btn" class="button button-fill button-large" onclick="window.generateRecipes()" style="height: 60px; flex: 1;">
+                                        <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes" style="height: 50px;">
                                     </button>
                                 </div>
                                 <div id="recipe-generation-status" style="display: none; margin-top: 16px; text-align: center;">
@@ -352,18 +389,27 @@
                         <div id="recipe-detail-view" style="display: none;"></div>
                         
                         <!-- Saved Recipes -->
-                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 48px;">Saved Recipes</div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 16px;">Saved Recipes</div>
                         <div id="saved-recipes-list" class="list media-list"><ul></ul></div>
                     </div>
                     
                     <!-- Schedule Tab -->
                     <div id="tab-schedule" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="schedule" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
                         <div class="block-title" style="font-size: 24px; font-weight: bold;">Meal Schedule</div>
+                        <div style="text-align: center; margin: 8px 16px;">
+                            <button class="button button-fill" onclick="window.addMissingIngredientsToShopping()" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; padding: 12px 24px; border-radius: 8px;">
+                                Add Missing Ingredients to Shopping List
+                            </button>
+                        </div>
                         <div id="calendar-container" style="padding: 16px;"></div>
                     </div>
                     
                     <!-- Shopping Tab -->
                     <div id="tab-shopping" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="shopping" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
                         <div class="block-title" style="font-size: 24px; font-weight: bold;">Shopping List</div>
                         <div style="display: flex; gap: 8px; align-items: center; padding: 8px;">
                             <input type="text" id="shopping-item-input" placeholder="Add item..." onkeypress="if(event.key === 'Enter') window.addShoppingItem()" style="flex: 1; font-size: 18px; font-weight: bold; padding: 12px; border: 1px solid #ccc; border-radius: 4px;">
@@ -391,6 +437,12 @@
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
+        // Make Firebase functions globally accessible
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+
         // Initialize Framework7
         const app = new Framework7({
             el: '#app',
@@ -416,10 +468,36 @@
         window.callGemini = null;
         window.latestImageBase64 = null;
         window.f7 = app;
+        window.app = app; // Make app globally accessible
+        window.currentRecipeSheet = null; // Track current open recipe sheet
 
         const appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f';
         const GEMINI_VISION_MODEL = "gemini-2.0-flash-exp";
         const GEMINI_TEXT_MODEL = "gemini-2.0-flash-exp";
+        
+        // Close recipe sheets when switching tabs
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabLinks = document.querySelectorAll('.tab-link');
+            tabLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    // Close any open recipe sheet when switching away from recipes tab
+                    if (window.currentRecipeSheet) {
+                        window.currentRecipeSheet.close();
+                        window.currentRecipeSheet = null;
+                    }
+                    
+                    // Show/hide appropriate banner
+                    const targetTab = link.getAttribute('href').replace('#tab-', '');
+                    document.querySelectorAll('.tab-banner').forEach(banner => {
+                        if (banner.dataset.tab === targetTab) {
+                            banner.style.display = 'block';
+                        } else {
+                            banner.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
 
         const firebaseConfig = {
             apiKey: "AIzaSyCVlMsqNsW63L4m_u72Sv6WBFlw_pjUYpg",
@@ -683,9 +761,9 @@
 
             // Create a grid container
             const gridContainer = document.createElement('div');
-            gridContainer.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0;';
+            gridContainer.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0;';
 
-            sortedInventory.forEach((item) => {
+            sortedInventory.forEach((item, index) => {
                 const isExpired = item.expiry && isExpiredToday(item.expiry);
                 const isExpiringSoon = item.expiry && isWithinDays(item.expiry, 3);
                 const selected = window.selectedInventoryIds.has(item.id);
@@ -704,7 +782,9 @@
                 }
 
                 const itemDiv = document.createElement('div');
-                itemDiv.style.cssText = `background: ${itemBgColor}; padding: 8px; border-radius: 4px; border: 1px solid #ddd;`;
+                const isLeftColumn = index % 2 === 0;
+                const borderStyle = `border-bottom: 1px solid #ddd; ${isLeftColumn ? 'border-right: 1px solid #ddd;' : ''}`;
+                itemDiv.style.cssText = `background: ${itemBgColor}; padding: 8px; ${borderStyle}`;
                 itemDiv.innerHTML = `
                     <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0;">
@@ -749,24 +829,169 @@
 
         window.renderSavedRecipes = () => {
             const listEl = document.getElementById('saved-recipes-list');
+            console.log('renderSavedRecipes called, listEl:', listEl, 'recipes:', window.savedRecipes);
             if (!listEl) return;
             listEl.innerHTML = '<ul></ul>';
             const ul = listEl.querySelector('ul');
             window.savedRecipes.forEach(recipe => {
+                console.log('Rendering recipe:', recipe.title);
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <a href="#" class="item-link item-content">
                         <div class="item-inner">
                             <div class="item-title">${recipe.title}</div>
+                            <div class="item-after">
+                                <button class="button button-small button-fill color-red remove-recipe-btn" data-recipe-id="${recipe.id}">Remove</button>
+                            </div>
                         </div>
                     </a>
                 `;
-                li.querySelector('a').addEventListener('click', (e) => {
+                
+                // Add click handler for viewing recipe
+                li.querySelector('a.item-link').addEventListener('click', (e) => {
                     e.preventDefault();
-                    app.dialog.alert(recipe.content, recipe.title);
+                    window.viewSavedRecipe(recipe);
                 });
+                
+                // Add click handler for remove button with stopPropagation
+                li.querySelector('.remove-recipe-btn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.deleteSavedRecipe(recipe.id);
+                });
+                
                 ul.appendChild(li);
             });
+        };
+        
+        window.deleteSavedRecipe = async function(recipeId) {
+            if (!window.currentUserId || !window.db) return;
+            
+            app.dialog.confirm('Delete this recipe?', 'Confirm', async () => {
+                try {
+                    const collectionPath = `artifacts/${appId}/users/${window.currentUserId}/saved_recipes`;
+                    const recipeDocRef = doc(window.db, collectionPath, recipeId);
+                    await deleteDoc(recipeDocRef);
+                    
+                    app.toast.create({
+                        text: 'Recipe deleted!',
+                        closeTimeout: 2000,
+                    }).open();
+                } catch (e) {
+                    console.error('Error deleting recipe:', e);
+                    app.dialog.alert('Failed to delete recipe', 'Error');
+                }
+            });
+        };
+
+        window.viewSavedRecipe = function(recipe) {
+            // Store recipe in global variable for schedule/mark as made functions
+            window.currentSavedRecipe = {
+                title: recipe.title,
+                content: recipe.content
+            };
+            
+            // Escape HTML to prevent breaking the template
+            const escapeHtml = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            };
+            
+            const escapedTitle = escapeHtml(recipe.title);
+            const escapedContent = escapeHtml(recipe.content);
+            
+            const sheet = app.sheet.create({
+                content: `
+                    <div class="sheet-modal">
+                        <div class="sheet-modal-inner" style="padding: 16px 16px 30px 16px;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <button class="button" onclick="window.scheduleSavedRecipe()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Add to Schedule+</button>
+                                <button class="button" onclick="window.deductInventory()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Mark as Made+</button>
+                            </div>
+                            <h3 style="margin-top: 0; font-size: 20px; font-weight: bold;">${escapedTitle}</h3>
+                            <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${escapedContent}</pre>
+                        </div>
+                    </div>
+                `,
+                swipeToClose: true,
+                on: {
+                    closed: function() {
+                        this.destroy();
+                        if (window.currentRecipeSheet === this) {
+                            window.currentRecipeSheet = null;
+                        }
+                    }
+                }
+            });
+            
+            // Close previous sheet if open
+            if (window.currentRecipeSheet) {
+                window.currentRecipeSheet.close();
+            }
+            
+            window.currentRecipeSheet = sheet;
+            sheet.open();
+        };
+        
+        window.scheduleSavedRecipe = function() {
+            if (!window.currentSavedRecipe) return;
+            
+            const today = new Date();
+            const dates = [];
+            
+            // Generate next 7 days
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const dayName = dayNames[date.getDay()];
+                dates.push({ date: dateStr, label: `${dayName} (${dateStr})` });
+            }
+            
+            // Create action sheet with date options using proper Framework7 structure
+            const buttons = dates.map(d => ({
+                text: d.label,
+                onClick: async () => {
+                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                    const scheduleDocRef = window.doc(window.db, scheduleCollectionPath, 'schedule');
+                    
+                    try {
+                        const docSnap = await window.getDoc(scheduleDocRef);
+                        let currentSchedule = {};
+                        if (docSnap.exists()) {
+                            currentSchedule = docSnap.data().schedule || {};
+                        }
+                        
+                        currentSchedule[d.date] = {
+                            recipeTitle: window.currentSavedRecipe.title,
+                            recipeContent: window.currentSavedRecipe.content,
+                            date: d.date
+                        };
+                        
+                        await window.setDoc(scheduleDocRef, { schedule: currentSchedule });
+                        
+                        window.app.toast.create({
+                            text: `Scheduled for ${d.label}!`,
+                            closeTimeout: 2000,
+                        }).open();
+                    } catch (e) {
+                        console.error('Error scheduling meal:', e);
+                        window.app.dialog.alert('Failed to schedule meal', 'Error');
+                    }
+                }
+            }));
+            
+            buttons.push({
+                text: 'Cancel',
+                color: 'red'
+            });
+            
+            const actions = window.app.actions.create({
+                buttons: [buttons]
+            });
+            actions.open();
         };
 
         window.renderShoppingList = () => {
@@ -810,21 +1035,26 @@
                 
                 const scheduled = window.mealSchedule[dateStr];
                 const recipeTitle = scheduled ? scheduled.recipeTitle : 'No meal planned';
+                const hasScheduled = scheduled && scheduled.recipeTitle;
                 
                 const dayBox = document.createElement('div');
-                dayBox.style.cssText = 'margin-bottom: 12px; cursor: pointer;';
+                dayBox.style.cssText = 'margin-bottom: 12px;';
                 dayBox.innerHTML = `
-                    <img src="img/schedulebox.jpg" alt="${dayName}" style="width: 100%; height: 150px; display: block; border-radius: 8px; object-fit: cover;">
-                    <div style="position: relative; margin-top: -150px; padding: 16px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">
-                        <div style="font-size: 20px; font-weight: bold;">${dayName}</div>
-                        <div style="font-size: 16px; margin-top: 4px;">${dateStr}</div>
-                        <div style="font-size: 14px; margin-top: 8px; font-style: italic;">${recipeTitle}</div>
+                    <div style="position: relative;">
+                        <img src="img/schedulebox.jpg" alt="${dayName}" style="width: 100%; height: 150px; display: block; border-radius: 8px; object-fit: cover; cursor: pointer;" onclick="${hasScheduled ? `window.viewScheduledRecipe('${dateStr}')` : `window.showScheduleModal('${dateStr}', '${dayName}')`}">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 16px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); pointer-events: none;">
+                            <div style="font-size: 20px; font-weight: bold;">${dayName}</div>
+                            <div style="font-size: 16px; margin-top: 4px;">${dateStr}</div>
+                            <div style="font-size: 14px; margin-top: 8px; font-style: italic;">${recipeTitle}</div>
+                        </div>
+                        ${hasScheduled ? `
+                            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 8px;">
+                                <button class="button button-small button-fill" onclick="event.stopPropagation(); window.removeScheduledMeal('${dateStr}')" style="background: #ef4444; color: white; font-size: 14px; font-weight: bold;">Remove</button>
+                                <button class="button button-small button-fill" onclick="event.stopPropagation(); window.markScheduledMealAsMade('${dateStr}')" style="background: #10b981; color: white; font-size: 14px; font-weight: bold;">Mark as Made</button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
-                
-                dayBox.addEventListener('click', () => {
-                    window.showScheduleModal(dateStr, dayName);
-                });
                 
                 container.appendChild(dayBox);
             }
@@ -852,6 +1082,7 @@
                         
                         currentSchedule[dateStr] = {
                             recipeTitle: recipeTitle.trim(),
+                            recipeContent: null, // Manually added meals don't have content
                             date: dateStr
                         };
                         
@@ -869,6 +1100,188 @@
                 () => {},
                 currentRecipe
             );
+        };
+        
+        window.viewScheduledRecipe = function(dateStr) {
+            const scheduled = window.mealSchedule[dateStr];
+            if (!scheduled || !scheduled.recipeContent) {
+                app.dialog.alert('No recipe details available for this meal.', 'Info');
+                return;
+            }
+            
+            // Escape HTML to prevent breaking the template
+            const escapeHtml = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            };
+            
+            const escapedTitle = escapeHtml(scheduled.recipeTitle);
+            const escapedContent = escapeHtml(scheduled.recipeContent);
+            
+            const sheet = app.sheet.create({
+                content: `
+                    <div class="sheet-modal">
+                        <div class="sheet-modal-inner" style="padding: 16px 16px 30px 16px;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <button class="button" onclick="window.removeScheduledMeal('${dateStr}')" style="background: transparent; border: none; color: #ef4444; font-size: 18px; font-weight: bold;">Remove from Schedule</button>
+                                <button class="button" onclick="window.markScheduledMealAsMade('${dateStr}')" style="background: transparent; border: none; color: #10b981; font-size: 18px; font-weight: bold;">Mark as Made</button>
+                            </div>
+                            <h3 style="margin-top: 0; font-size: 20px; font-weight: bold;">${escapedTitle}</h3>
+                            <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${escapedContent}</pre>
+                        </div>
+                    </div>
+                `,
+                swipeToClose: true,
+                on: {
+                    closed: function() {
+                        this.destroy();
+                        if (window.currentRecipeSheet === this) {
+                            window.currentRecipeSheet = null;
+                        }
+                    }
+                }
+            });
+            
+            // Close previous sheet if open
+            if (window.currentRecipeSheet) {
+                window.currentRecipeSheet.close();
+            }
+            
+            window.currentRecipeSheet = sheet;
+            sheet.open();
+        };
+        
+        window.removeScheduledMeal = async function(dateStr) {
+            app.dialog.confirm('Remove this scheduled meal?', 'Confirm', async () => {
+                const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                
+                try {
+                    const docSnap = await getDoc(scheduleDocRef);
+                    let currentSchedule = {};
+                    if (docSnap.exists()) {
+                        currentSchedule = docSnap.data().schedule || {};
+                    }
+                    
+                    delete currentSchedule[dateStr];
+                    
+                    await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                    
+                    app.toast.create({
+                        text: 'Meal removed from schedule!',
+                        closeTimeout: 2000,
+                    }).open();
+                } catch (e) {
+                    console.error('Error removing scheduled meal:', e);
+                    app.dialog.alert('Failed to remove meal', 'Error');
+                }
+            });
+        };
+        
+        window.markScheduledMealAsMade = async function(dateStr) {
+            const scheduled = window.mealSchedule[dateStr];
+            if (!scheduled) return;
+            
+            app.dialog.confirm(`Mark "${scheduled.recipeTitle}" as made and remove ingredients from inventory?`, 'Mark as Made', async () => {
+                // Since we don't have the full recipe details in the schedule,
+                // we'll just remove the meal from schedule
+                const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                
+                try {
+                    const docSnap = await getDoc(scheduleDocRef);
+                    let currentSchedule = {};
+                    if (docSnap.exists()) {
+                        currentSchedule = docSnap.data().schedule || {};
+                    }
+                    
+                    delete currentSchedule[dateStr];
+                    
+                    await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                    
+                    app.toast.create({
+                        text: 'Meal marked as made!',
+                        closeTimeout: 2000,
+                    }).open();
+                } catch (e) {
+                    console.error('Error marking meal as made:', e);
+                    app.dialog.alert('Failed to mark as made', 'Error');
+                }
+            });
+        };
+        
+        window.addMissingIngredientsToShopping = async function() {
+            // Get all scheduled meals
+            const scheduledMeals = Object.values(window.mealSchedule);
+            
+            if (scheduledMeals.length === 0) {
+                app.dialog.alert('No meals scheduled!', 'Info');
+                return;
+            }
+            
+            // Filter meals that have recipe content
+            const mealsWithContent = scheduledMeals.filter(meal => meal.recipeContent);
+            
+            if (mealsWithContent.length === 0) {
+                app.dialog.alert('No scheduled meals have recipe details. Only recipes added from the app (not manually entered) can have their ingredients extracted.', 'Info');
+                return;
+            }
+            
+            // Extract ingredients from all recipes
+            const allIngredients = new Set();
+            mealsWithContent.forEach(meal => {
+                // Parse ingredients from recipe content
+                const content = meal.recipeContent;
+                
+                // Look for the INGREDIENTS section
+                const ingredientsMatch = content.match(/---\s*INGREDIENTS\s*---\s*([\s\S]*?)(?=---|\n\n|$)/i);
+                if (ingredientsMatch) {
+                    const ingredientsText = ingredientsMatch[1];
+                    // Split by newlines and clean up
+                    const ingredients = ingredientsText
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line && !line.startsWith('---'));
+                    
+                    ingredients.forEach(ingredient => {
+                        if (ingredient) allIngredients.add(ingredient);
+                    });
+                }
+            });
+            
+            if (allIngredients.size === 0) {
+                app.dialog.alert('No ingredients could be extracted from scheduled recipes.', 'Info');
+                return;
+            }
+            
+            // Check which ingredients are missing from inventory
+            const inventoryNames = window.inventory.map(item => normalizeItemName(item.name));
+            const missingIngredients = Array.from(allIngredients).filter(ingredient => {
+                // Extract just the ingredient name (remove quantities, etc.)
+                const ingredientName = ingredient.replace(/^[-•*]\s*/, '').split(/\s*[-–]\s*/)[0].trim();
+                const normalized = normalizeItemName(ingredientName);
+                return !inventoryNames.some(invName => invName.includes(normalized) || normalized.includes(invName));
+            });
+            
+            if (missingIngredients.length === 0) {
+                app.dialog.alert('All ingredients from scheduled recipes are already in your inventory!', 'Success');
+                return;
+            }
+            
+            // Add missing ingredients to shopping list
+            const newShoppingItems = missingIngredients.map(ingredient => ({
+                id: generateId(),
+                name: ingredient
+            }));
+            
+            const updatedList = [...window.shoppingList, ...newShoppingItems];
+            await window.saveShoppingListToDb(updatedList);
+            
+            app.toast.create({
+                text: `Added ${missingIngredients.length} missing ingredient${missingIngredients.length > 1 ? 's' : ''} to shopping list!`,
+                closeTimeout: 3000,
+            }).open();
         };
 
         // Inventory CRUD
@@ -1171,6 +1584,7 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
             const maxCookTime = document.getElementById('max-cook-time').value;
             const maxIngredients = document.getElementById('max-ingredients').value;
             const allowMissingIngredients = document.getElementById('allow-missing-ingredients').checked;
+            const dietaryRestrictions = document.getElementById('dietary-restrictions').value.trim();
 
             const inventoryList = window.inventory.map(item => {
                 let s = item.name;
@@ -1183,12 +1597,27 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
                 'Use Metric measurements (grams, milliliters, Celsius)' :
                 'Use Standard US measurements (ounces, cups, Fahrenheit)';
 
+            // Add randomization element
+            const cuisineStyles = ['Italian', 'Mexican', 'Asian', 'Mediterranean', 'American', 'Indian', 'Thai', 'French', 'Middle Eastern', 'Fusion'];
+            const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack', 'appetizer', 'soup', 'salad', 'main course', 'side dish'];
+            const cookingMethods = ['grilled', 'baked', 'sautéed', 'roasted', 'stir-fried', 'steamed', 'pan-fried', 'slow-cooked'];
+            
+            const randomCuisine = cuisineStyles[Math.floor(Math.random() * cuisineStyles.length)];
+            const randomMeal = mealTypes[Math.floor(Math.random() * mealTypes.length)];
+            const randomMethod = cookingMethods[Math.floor(Math.random() * cookingMethods.length)];
+            const randomSeed = Math.floor(Math.random() * 100000);
+
             let systemPrompt = `You are a world-class chef. ${unitPreference}. Cooking time under ${maxCookTime} minutes. Max ${maxIngredients} ingredients. `;
+            systemPrompt += `IMPORTANT: Be creative and VARY your suggestions. Random seed: ${randomSeed}. Consider incorporating ${randomCuisine} flavors, ${randomMeal} options, or ${randomMethod} techniques where appropriate. `;
+
+            if (dietaryRestrictions) {
+                systemPrompt += `IMPORTANT: Dietary restrictions - ${dietaryRestrictions}. All recipes MUST comply with these restrictions. `;
+            }
 
             if (allowMissingIngredients) {
-                systemPrompt += `Generate 3 recipes using available inventory, but you may include common missing ingredients. Mark which are AVAILABLE vs MISSING.`;
+                systemPrompt += `Generate 3 DIFFERENT and VARIED recipes using available inventory, but you may include common missing ingredients. Mark which are AVAILABLE vs MISSING.`;
             } else {
-                systemPrompt += `Generate 3 recipes using ONLY the ingredients from inventory.`;
+                systemPrompt += `Generate 3 DIFFERENT and VARIED recipes using ONLY the ingredients from inventory.`;
             }
 
             const userQuery = `My pantry: ${inventoryList}. Generate 3 recipes.`;
@@ -1220,7 +1649,10 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 generationConfig: {
                     responseMimeType: "application/json",
-                    responseSchema: recipeSchema
+                    responseSchema: recipeSchema,
+                    temperature: 1.5,  // Higher temperature for more variety and creativity
+                    topP: 0.95,
+                    topK: 40
                 }
             };
 
@@ -1282,31 +1714,36 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
             const sheet = app.sheet.create({
                 content: `
                     <div class="sheet-modal">
-                        <div class="toolbar">
-                            <div class="toolbar-inner">
-                                <div class="left"></div>
-                                <div class="right">
-                                    <a class="link sheet-close">Close</a>
-                                </div>
+                        <div class="sheet-modal-inner" style="padding: 16px 16px 30px 16px;">
+                            <div class="block" style="text-align: center; margin-top: 0; margin-bottom: 16px;">
+                                <button class="button" onclick="window.saveCurrentRecipe()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Save Recipe+</button>
+                                <button class="button" onclick="window.scheduleGeneratedRecipe(${index})" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Add to Schedule+</button>
+                                <button class="button" onclick="window.deductInventory()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Mark as Made+</button>
                             </div>
-                        </div>
-                        <div class="sheet-modal-inner">
-                            <div class="page-content">
-                                <div class="block-title">${recipe.recipeName}</div>
-                                <div class="block">
-                                    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${content}</pre>
-                                </div>
-                                <div class="block">
-                                    <button class="button button-fill color-green" onclick="window.saveCurrentRecipe()">Save Recipe</button>
-                                    <button class="button button-fill" onclick="window.scheduleRecipeModal()">Schedule</button>
-                                    <button class="button button-fill color-orange" onclick="window.deductInventory()">Mark as Made</button>
-                                </div>
+                            <div class="block-title" style="margin-top: 0; font-size: 20px; font-weight: bold;">${recipe.recipeName}</div>
+                            <div class="block">
+                                <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${content}</pre>
                             </div>
                         </div>
                     </div>
                 `,
                 swipeToClose: true,
+                on: {
+                    closed: function() {
+                        this.destroy();
+                        if (window.currentRecipeSheet === this) {
+                            window.currentRecipeSheet = null;
+                        }
+                    }
+                }
             });
+            
+            // Close previous sheet if open
+            if (window.currentRecipeSheet) {
+                window.currentRecipeSheet.close();
+            }
+            
+            window.currentRecipeSheet = sheet;
             sheet.open();
         }
 
@@ -1408,6 +1845,68 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
             }
         }
 
+        window.scheduleGeneratedRecipe = function(index) {
+            const recipe = window.latestGeneratedRecipes[index];
+            if (!recipe) return;
+            
+            const today = new Date();
+            const dates = [];
+            
+            // Generate next 7 days
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const dayName = dayNames[date.getDay()];
+                dates.push({ date: dateStr, label: `${dayName} (${dateStr})` });
+            }
+            
+            // Create action sheet with date options
+            const buttons = dates.map(d => ({
+                text: d.label,
+                onClick: async () => {
+                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                    const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                    
+                    try {
+                        const docSnap = await getDoc(scheduleDocRef);
+                        let currentSchedule = {};
+                        if (docSnap.exists()) {
+                            currentSchedule = docSnap.data().schedule || {};
+                        }
+                        
+                        const content = formatRecipeContent(recipe);
+                        currentSchedule[d.date] = {
+                            recipeTitle: recipe.recipeName,
+                            recipeContent: content,
+                            date: d.date
+                        };
+                        
+                        await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                        
+                        app.toast.create({
+                            text: `Scheduled for ${d.label}!`,
+                            closeTimeout: 2000,
+                        }).open();
+                    } catch (e) {
+                        console.error('Error scheduling meal:', e);
+                        app.dialog.alert('Failed to schedule meal', 'Error');
+                    }
+                }
+            }));
+            
+            buttons.push({
+                text: 'Cancel',
+                color: 'red'
+            });
+            
+            app.actions.create({
+                buttons: buttons
+            }).open();
+        };
+
+
         window.searchRecipes = async function() {
             const input = document.getElementById('recipe-search-input');
             const searchQuery = input.value.trim();
@@ -1478,31 +1977,42 @@ ${recipe.ingredientsSummary}
 ${recipe.instructions}
 `;
                     
+                    // Store for schedule/save functions
+                    window.currentSearchedRecipe = {
+                        title: recipe.recipeName,
+                        content: content
+                    };
+                    
                     const sheet = app.sheet.create({
                         content: `
                             <div class="sheet-modal">
-                                <div class="toolbar">
-                                    <div class="toolbar-inner">
-                                        <div class="left"></div>
-                                        <div class="right">
-                                            <a class="link sheet-close">Close</a>
-                                        </div>
+                                <div class="sheet-modal-inner" style="padding: 16px 16px 30px 16px;">
+                                    <div style="text-align: center; margin-bottom: 16px;">
+                                        <button class="button" onclick="window.saveSearchedRecipe()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Save Recipe+</button>
+                                        <button class="button" onclick="window.scheduleSearchedRecipe()" style="background: transparent; border: none; color: #6366f1; font-size: 18px; font-weight: bold;">+Add to Schedule+</button>
                                     </div>
-                                </div>
-                                <div class="sheet-modal-inner">
-                                    <div class="block">
-                                        <h3>${recipe.recipeName}</h3>
-                                        <pre style="white-space: pre-wrap; font-family: inherit;">${content}</pre>
-                                        <div style="display: flex; gap: 8px; margin-top: 16px;">
-                                            <button class="button button-fill" style="flex: 1;" onclick="window.saveSearchedRecipe('${recipe.recipeName.replace(/'/g, "\\'")}', \`${content.replace(/`/g, '\\`')}\`)">Save Recipe</button>
-                                            <button class="button button-fill" style="flex: 1;" onclick="window.scheduleSearchedRecipe('${recipe.recipeName.replace(/'/g, "\\'")}', \`${content.replace(/`/g, '\\`')}\`)">Add to Schedule</button>
-                                        </div>
-                                    </div>
+                                    <h3 style="margin-top: 0; font-size: 20px; font-weight: bold;">${recipe.recipeName}</h3>
+                                    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${content}</pre>
                                 </div>
                             </div>
                         `,
                         swipeToClose: true,
+                        on: {
+                            closed: function() {
+                                this.destroy();
+                                if (window.currentRecipeSheet === this) {
+                                    window.currentRecipeSheet = null;
+                                }
+                            }
+                        }
                     });
+                    
+                    // Close previous sheet if open
+                    if (window.currentRecipeSheet) {
+                        window.currentRecipeSheet.close();
+                    }
+                    
+                    window.currentRecipeSheet = sheet;
                     sheet.open();
                     
                     // Store for potential saving
@@ -1517,15 +2027,18 @@ ${recipe.instructions}
             statusEl.style.display = 'none';
         };
         
-        window.saveSearchedRecipe = async function(title, content) {
-            await window.saveGeneratedRecipeToDb(title, content);
+        window.saveSearchedRecipe = async function() {
+            if (!window.currentSearchedRecipe) return;
+            await window.saveGeneratedRecipeToDb(window.currentSearchedRecipe.title, window.currentSearchedRecipe.content);
             app.toast.create({
                 text: 'Recipe saved!',
                 closeTimeout: 2000,
             }).open();
         };
         
-        window.scheduleSearchedRecipe = function(title, content) {
+        window.scheduleSearchedRecipe = function() {
+            if (!window.currentSearchedRecipe) return;
+            
             const today = new Date();
             const dates = [];
             
@@ -1554,7 +2067,8 @@ ${recipe.instructions}
                         }
                         
                         currentSchedule[d.date] = {
-                            recipeTitle: title,
+                            recipeTitle: window.currentSearchedRecipe.title,
+                            recipeContent: window.currentSearchedRecipe.content,
                             date: d.date
                         };
                         
@@ -1577,7 +2091,7 @@ ${recipe.instructions}
             });
             
             app.actions.create({
-                buttons: [buttons]
+                buttons: buttons
             }).open();
         };
 
