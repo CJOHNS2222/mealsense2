@@ -9,7 +9,7 @@
     
     <!-- Framework7 CSS -->
      <style lang="css">
-        @import '/mealsense2/framework.css';
+        @import 'framework.css';
     </style>
     <style>
         :root {
@@ -237,234 +237,7 @@
         
         </head>
 <body>
-    <div id="app" class="framework7-root">
-        <!-- Main View -->
-        <div class="view view-main view-init safe-areas" data-master-detail-breakpoint="768">
-            <!-- Top Navbar -->
-            <div class="navbar" style="display: none;">
-                <div style="background-color: #44130e;"></div>
-                <div class="navbar-inner" style="background-color: #44130e;">
-                    <div class="title">Smart Pantry Chef</div>
-                </div>
-            </div>
-            
-            <!-- Toolbar/Tabs -->
-            <div class="toolbar toolbar-bottom tabbar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; height: 123px; padding: 0 30px 40px 30px; box-sizing: border-box; background-color: #44130e;">
-                <div class="toolbar-inner" style="display: flex; justify-content: center; align-items: center; height: 100%; padding: 0; gap: 20px;">
-                    <a href="#tab-inventory" class="tab-link tab-link-active" style="padding-left: 20px; display: flex; justify-content: center; align-items: center;">
-                        <i class="icon" style="width: 158px; height: 62px;"><img src="img/inventory.jpg" alt="Inventory" style="width: 100%; height: 83px;"></i>
-                    </a>
-                    <a href="#tab-recipes" class="tab-link" style="display: flex; justify-content: center; align-items: center;">
-                        <i class="icon" style="width: 158px; height: 62px;"><img src="img/recipes.jpg" alt="Recipes" style="width: 100%; height: 83px;"></i>
-                    </a>
-                    <a href="#tab-schedule" class="tab-link" style="display: flex; justify-content: center; align-items: center;">
-                        <i class="icon" style="width: 158px; height: 62px;"><img src="img/schedule.jpg" alt="Schedule" style="width: 100%; height: 83px;"></i>
-                    </a>
-                    <a href="#tab-shopping" class="tab-link" style="padding-right: 20px; display: flex; justify-content: center; align-items: center;">
-                        <i class="icon" style="width: 158px; height: 62px;"><img src="img/shopping.jpg" alt="Shopping" style="width: 100%; height: 83px;"></i>
-                    </a>
-                <span class="tab-link-highlight ai-style-change-1" style="width: 25%; transform: translate3d(0%, 0px, 0px);"></span></div>
-            </div>
-            
-            <!-- Page content with tabs -->
-            <div class="page page-current" style="overflow-y: auto; height: calc(100vh - 123px);">
-                <div class="page-content" style="padding-top: env(safe-area-inset-top, 20px); padding-bottom: 20px; overflow-x: hidden;">
-                    <div class="tabs">
-                        <!-- Inventory Tab -->
-                        <div id="tab-inventory" class="tab tab-active">
-                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="inventory" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: block; z-index: 9998;">
-                        <div style="height: 75px;"></div>
-                        <!-- Scanner Section -->
-                        <div class="card" style="color: #44130e;">
-                            <div class="card-content card-content-padding">
-                                <div id="scan-preview-container" style="color: #44130e;" class="scan-preview-box">
-                                    <div id="scan-placeholder">
-                                        <i class="f7-icons" style="font-size: 48px; color: #9ca3af;">camera</i>
-                                        <p style="color: #9ca3af; font-weight: bold; margin-top: 8px;">No image selected</p>
-                                    </div>
-                                    <img id="scan-preview" class="scan-preview-img" style="display: none;">
-                                </div>
-                                <div style="color: #44130e; text-align: center; margin-top: 20px;">
-                                    <label style="cursor: pointer; display: inline-block;">
-                                        <img src="img/scanimage.jpg" style="vertical-align: middle; height: 50px;" alt="Camera Capture">
-                                        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
-                                    </label>
-                                    <label class="button[disabled]" style="cursor: pointer; display: inline-block;">
-                                        <img src="img/photogallery.jpg" style="vertical-align: middle; height: 50px;" alt="Gallery">
-                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
-                                    </label>
-                                    <button onclick="window.processImageForInventory()" style="cursor: pointer; display: inline-block; background: #44130e; border: none;">
-                                        <img src="img/analyze.jpg" style="vertical-align: middle; height: 50px;" alt="Scan Image">
-                                    </button>
-                                </div>
-                                <div id="scan-status" class="text-align-center" style="display: none; margin-top: 16px;">
-                                    <div class="preloader"><span class="preloader-inner">
-    <svg viewBox="0 0 36 36">
-      <circle cx="18" cy="18" r="16"></circle>
-    </svg>
-  </span></div>
-                                    <p id="scan-status-text" style="margin-top: 8px; color: #6366f1;">Analyzing...</p>
-                                </div>
-                                <div id="scan-error" class="block-footer" style="display: none; color: #ef4444; margin-top: 12px;"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Detection Results -->
-                        <div id="detection-result" style="display: none;">
-                            <div class="block-title">Detected Items</div>
-                            <div class="list">
-                                <ul id="detected-items-list"></ul>
-                            </div>
-                            <div class="block">
-                                <button class="button button-fill button-large" onclick="saveDetectedInventory()">
-                                    <img src="img/addtolist.jpg" alt="Add Detected Items">
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Manual Add -->
-                        <div class="block-title" style="margin-top: 32px; font-size: 20px; font-weight: bold; text-align: center;">Add Item Manually</div>
-                        <div class="block" style="padding: 0 16px;">
-                            <div style="display: flex; gap: 8px; width: 100%;">
-                                <input type="text" id="manual-item-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Item name">
-                                <input type="date" id="manual-expiry-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Expiration Date">
-                            </div>
-                        </div>
-                        <div class="block" style="text-align: center;">
-                            <button class="button button-fill" onclick="window.addManualItem()">
-                                <img src="img/addtopantry.jpg" style="height: 50px;" alt="Add Item">
-                            </button>
-                        </div>
-                        
-                        <!-- Inventory List -->
-                        <div class="block-title" style="font-size: 24px; font-weight: bold; margin-top: 32px; text-align: center;">
-                            Your Inventory <span id="item-count" style="color: #6b7280;">(0 items)</span>
-                        </div>
-                        <div id="inventory-placeholder" class="block text-align-center" style="color: rgb(156, 163, 175); display: block;">
-                            <i class="f7-icons" style="font-size: 64px; color: #d1d5db;">cube_box</i>
-                            <p>No items in inventory</p>
-                        </div>
-                        <div class="list media-list" id="inventory-list-container" style="margin: 0;">
-                            <ul id="inventory-list" style="margin: 0; padding: 0;"></ul>
-                        </div>
-                        
-                        <!-- Delete Controls -->
-                        <div id="delete-controls" class="block" style="border:none; display: none; text-align: center;">
-                            <button onclick="window.deleteSelectedItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
-                                <img src="img/delete.jpg" style="height: 60px;" alt="Delete">
-                            </button>
-                            <button class="button" onclick="window.removeAllItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
-                                <img src="img/removeall.jpg" style="height: 60px;" alt="Clear All">
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Recipes Tab -->
-                    <div id="tab-recipes" class="tab">
-                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="recipes" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
-                        <div style="height: 75px;"></div>
-                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center;">Recipe Search</div>
-                        <div class="card" style="border: 2px solid #44130e; margin: 8px;">
-                            <div class="card-content card-content-padding">
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <input type="text" id="recipe-search-input" placeholder="Search for recipes..." style="flex: 1; font-size: 16px; font-weight: bold; padding: 12px; border: 1px solid #ccc; border-radius: 4px;">
-                                    <button class="button button-fill" onclick="window.searchRecipes()" style="height: 50px; flex-shrink: 0;">
-                                        <img src="img/searchforrecipe.jpg" alt="Search" style="height: 40px;">
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <!-- Recipe Generation Options (collapsible/optional) -->
-                        <div class="card" style="border: 2px solid #44130e; margin: 8px;">
-                            <div class="card-content card-content-padding">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                                    <div>
-                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Cook Time</label>
-                                        <input type="number" id="max-cook-time" value="60" min="10" max="240" style="width: calc(100% - 30px); font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Ingredients</label>
-                                        <input type="number" id="max-ingredients" value="10" min="3" max="20" style="width: calc(100% - 30px); font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Dietary Restrictions</label>
-                                        <input type="text" id="dietary-restrictions" placeholder="e.g., vegetarian" style="width: 100%; font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold;">
-                                        <input type="checkbox" id="allow-missing-ingredients">
-                                        <span>Allow missing ingredients</span>
-                                    </label>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 50px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 40px;"></button>
-                                        <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 50px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 40px;"></button>
-                                    </div>
-                                </div>
-                                <div id="recipe-generation-status" style="display: none; margin-top: 16px; text-align: center;">
-                                    <div class="preloader"><span class="preloader-inner">
-    <svg viewBox="0 0 36 36">
-      <circle cx="18" cy="18" r="16"></circle>
-    </svg>
-  </span></div>
-                                    <p style="margin-top: 8px; color: #6366f1;">Consulting the Smart Chef...</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Generate Recipes Button (centered, always visible, now below options) -->
-                        <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin: 24px 0 8px 0;">
-                            <button id="generate-recipe-btn" class="button button-fill button-large" onclick="window.generateRecipes()" style="height: 60px; min-width: 220px; max-width: 90vw; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; background: #6366f1; color: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                                <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes" style="height: 50px; margin-right: 12px;">Generate Recipes
-                            </button>
-                        </div>
-
-                        <!-- Recipe Results -->
-                        <div id="recipe-list-view" class="list media-list" style="margin-top: 16px;"></div>
-                        <div id="recipe-detail-view" style="display: none;"></div>
-
-                        <!-- Saved Recipes -->
-                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 16px;">Saved Recipes</div>
-                        <div id="saved-recipes-list" class="list media-list"><ul></ul></div>
-                    </div>
-                    
-                    <!-- Schedule Tab -->
-                    <div id="tab-schedule" class="tab">
-                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="schedule" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
-                        <div style="height: 75px;"></div>
-                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center;">Meal Schedule</div>
-                        <div style="text-align: center; margin: 8px 16px;">
-                            <button class="button" onclick="window.addMissingIngredientsToShopping()" style="background: #f3f4f6; color: #2563eb; font-size: 18px; font-weight: bold; padding: 14px 28px; border-radius: 8px; border: 2px solid #2563eb; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin: 0 auto; display: inline-block;">
-                                Add Missing Ingredients to Shopping List
-                            </button>
-                        </div>
-                        <div id="calendar-container" style="padding: 16px; max-width: 600px; margin: 0 auto;"></div>
-                    </div>
-                    
-                    <!-- Shopping Tab -->
-                    <div id="tab-shopping" class="tab">
-                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="shopping" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
-                        <div style="height: 75px;"></div>
-                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Shopping List</div>
-                        <div style="display: flex; gap: 8px; align-items: center; padding: 8px;">
-                            <input type="text" id="shopping-item-input" placeholder="Add item..." onkeypress="if(event.key === 'Enter') window.addShoppingItem()" style="flex: 1; font-size: 18px; font-weight: bold; padding: 12px; border: 1px solid #ccc; border-radius: 4px;">
-                            <button class="button button-fill" onclick="if(window.addShoppingItem) window.addShoppingItem(); else console.error('addShoppingItem not ready');" style="height: 50px; flex-shrink: 0;">
-                                <img src="img/addtolist.jpg" alt="Add Item" style="height: 40px;">
-                            </button>
-                        </div>
-                        <div id="shopping-list" class="list" style="padding-left: 0;"><ul style="padding-left: 0;"></ul></div>
-                    </div>
-                </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Popups and Sheets will be added here -->
-    </div>
-
-    <!-- Framework7 Library -->
+       <!-- Framework7 Library -->
     <script src="https://cdn.jsdelivr.net/npm/framework7@8/framework7-bundle.min.js"></script>
     
     <!-- Firebase SDKs -->
@@ -507,6 +280,50 @@
         window.f7 = app;
         window.app = app; // Make app globally accessible
         window.currentRecipePopup = null; // Track current open recipe popup
+
+        // Ensure renderShoppingList and renderSchedule are available before any listeners use them
+        window.renderShoppingList = () => {
+            const listEl = document.getElementById('shopping-list');
+            if (!listEl) return;
+            listEl.innerHTML = '<ul></ul>';
+            const ul = listEl.querySelector('ul');
+            window.shoppingList.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="item-content">
+                        <div class="item-inner">
+                            <div class="item-title">${item.name}</div>
+                            <div class="item-after">
+                                <a href="#" onclick="window.removeShoppingItem('${item.id}'); return false;" class="button button-small button-fill color-red">Remove</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                ul.appendChild(li);
+            });
+        };
+
+        window.renderSchedule = () => {
+            const container = document.getElementById('calendar-container');
+            if (!container) return;
+            // Get today and next 6 days
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            container.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const dayName = dayNames[date.getDay()];
+                const scheduled = window.mealSchedule[dateStr];
+                const recipeTitle = scheduled ? scheduled.recipeTitle : 'No meal planned';
+                const hasScheduled = scheduled && scheduled.recipeTitle;
+                const dayBox = document.createElement('div');
+                dayBox.style.cssText = 'margin-bottom: 12px;';
+                // ...existing code for rendering each day...
+            }
+        };
 
         const appId = '1:89889306830:web:be0e6e5b707e2ba89ef89f';
         const GEMINI_VISION_MODEL = "gemini-2.0-flash-exp";
@@ -882,9 +699,11 @@
                 `;
                 // Add click handler to the title for viewing recipe (open as popup)
                 li.querySelector('.item-title').addEventListener('click', (e) => {
-                    e.preventDefault();
+                    if (e) e.preventDefault();
                     window.viewSavedRecipe(recipe);
                 });
+                // Add preventDefault to scheduled recipe view handler if needed
+                // (viewScheduledRecipe is called from onclick on an <img>, so not needed there)
                 // Add click handler for remove button
                 li.querySelector('.remove-recipe-btn').addEventListener('click', (e) => {
                     e.preventDefault();
@@ -913,100 +732,339 @@
         };
 
         window.viewSavedRecipe = function(recipe) {
-            // Store recipe in global variable for schedule/mark as made functions
             window.currentSavedRecipe = {
                 title: recipe.title,
                 content: recipe.content
             };
+            // Set modal title and content
+            document.getElementById('recipe-modal-title').textContent = recipe.title;
+            document.getElementById('recipe-modal-content').innerHTML = `<br><br><br><div class=\"block\" style=\"text-align: center; margin-top: 8px;\"><button class=\"button button-fill\" onclick=\"window.scheduleSavedRecipe()\" style=\"background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;\">Add to Schedule</button> <button class=\"button button-fill\" onclick=\"window.deductInventory()\" style=\"background: #10b981; color: white; font-size: 16px; font-weight: bold;\">Mark as Made</button></div><div class=\"block\"><pre style=\"white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.5;\">${recipe.content}</pre></div>`;
+            window.openRecipeModal();
+                                    // Switch to schedule tab
+                                    document.querySelector('a[href="#tab-schedule"]').click();
+                                    // Show date picker dialog
+                                    window.app.dialog.create({
+                                        title: 'Pick a date to schedule this recipe:',
+                                        content: `<div style="text-align:center;margin:1em 0;">
+                                            <input type="date" id="schedule-date-input" style="font-size:18px;padding:8px;">
+                                        </div>`,
+                                        buttons: [
+                                            {
+                                                text: 'Cancel',
+                                                close: true
+                                            },
+                                            {
+                                                text: 'Schedule',
+                                                close: false,
+                                                onClick: async function(dialog, e) {
+                                                    const dateInput = document.getElementById('schedule-date-input');
+                                                    const dateStr = dateInput ? dateInput.value : '';
+                                                    if (!dateStr) {
+                                                        window.app.dialog.alert('Please select a date.');
+                                                        return false;
+                                                    }
+                                                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                                                    const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                                                    try {
+                                                        const docSnap = await getDoc(scheduleDocRef);
+                                                        let currentSchedule = {};
+                                                        if (docSnap.exists()) {
+                                                            currentSchedule = docSnap.data().schedule || {};
+                                                        }
+                                                        currentSchedule[dateStr] = {
+                                                            recipeTitle: window.currentSearchedRecipe.title,
+                                                            recipeContent: window.currentSearchedRecipe.content,
+                                                            date: dateStr
+                                                        };
+                                                        await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                                                        window.app.dialog.close();
+                                                        window.app.toast.create({
+                                                            text: `Scheduled for ${dateStr}!`,
+                                                            closeTimeout: 2000,
+                                                        }).open();
+                                                    } catch (e) {
+                                                        console.error('Error scheduling meal:', e);
+                                                        window.app.dialog.alert('Failed to schedule meal.');
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }).open();
+                                    window.closeRecipeModal();
+                                };
+                                </script>
+                <script>
+                // Close the recipe panel when clicking outside of it
+                document.addEventListener('click', function(event) {
+                    const panel = document.querySelector('.panel-right');
+                    if (panel && panel.classList.contains('panel-in')) {
+                        if (!panel.contains(event.target) && !event.target.closest('.panel-right')) {
+                            if (window.app && window.app.panel) {
+                                window.app.panel.close('#recipe-panel');
+                            }
+                        }
+                    }
+                });
+                </script>
+            <style>
+                #recipe-panel-content {
+                    padding-top: 56px;
+                }
+            </style>
+        <!-- Side Panel for Recipe Results -->
+        <!-- Modal for Recipe Results -->
+        <div class="modal" id="recipe-modal" style="display:none;">
+            <div class="view">
+                <div class="page">
+                    <div class="navbar">
+                        <div class="navbar-inner">
+                            <div class="title" id="recipe-modal-title">Recipe</div>
+                            <div class="right"><a href="#" class="link" onclick="window.closeRecipeModal()">Close</a></div>
+                        </div>
+                    </div>
+                    <div class="page-content" id="recipe-modal-content">
+                        <!-- Recipe content will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div id="app" class="framework7-root">
+        <!-- Main View -->
+        <div class="view view-main view-init safe-areas" data-master-detail-breakpoint="768">
+            <!-- Top Navbar -->
+            <div class="navbar" style="display: none;">
+                <div style="background-color: #44130e;"></div>
+                <div class="navbar-inner" style="background-color: #44130e;">
+                    <div class="title">Smart Pantry Chef</div>
+                </div>
+            </div>
             
-            // Escape HTML to prevent breaking the template
-            const escapeHtml = (text) => {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            };
+            <!-- Toolbar/Tabs -->
+            <div class="toolbar toolbar-bottom tabbar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; height: 123px; padding: 0 30px 40px 30px; box-sizing: border-box; background-color: #44130e;">
+                <div class="toolbar-inner" style="display: flex; justify-content: center; align-items: center; height: 100%; padding: 0; gap: 20px;">
+                    <a href="#tab-inventory" class="tab-link tab-link-active" style="padding-left: 10px; display: flex; justify-content: center; align-items: center;">
+                        <i class="icon" style="width: 90px; height: 48px;"><img src="img/inventory.jpg" alt="Inventory" style="width: 100%; height: 56px;"></i>
+                    </a>
+                    <a href="#tab-recipes" class="tab-link" style="display: flex; justify-content: center; align-items: center;">
+                        <i class="icon" style="width: 90px; height: 48px;"><img src="img/recipes.jpg" alt="Recipes" style="width: 100%; height: 56px;"></i>
+                    </a>
+                    <a href="#tab-schedule" class="tab-link" style="display: flex; justify-content: center; align-items: center;">
+                        <i class="icon" style="width: 90px; height: 48px;"><img src="img/schedule.jpg" alt="Schedule" style="width: 100%; height: 56px;"></i>
+                    </a>
+                    <a href="#tab-shopping" class="tab-link" style="padding-right: 10px; display: flex; justify-content: center; align-items: center;">
+                        <i class="icon" style="width: 90px; height: 48px;"><img src="img/shopping.jpg" alt="Shopping" style="width: 100%; height: 56px;"></i>
+                    </a>
+                <span class="tab-link-highlight ai-style-change-1" style="width: 25%; transform: translate3d(0%, 0px, 0px);"></span></div>
+            </div>
             
-            const escapedTitle = escapeHtml(recipe.title);
-            const escapedContent = escapeHtml(recipe.content);
-            
-            const popup = app.popup.create({
-                content: `
-                    <div class="popup">
-                        <div class="page">
-                            <div class="navbar">
-                                <div class="navbar-bg"></div>
-                                <div class="navbar-inner">
-                                    <div class="title">${escapedTitle}</div>
-                                    <div class="right">
-                                        <a href="#" class="link popup-close">Close</a>
+            <!-- Page content with tabs -->
+            <div class="page page-current" style="overflow-y: auto; height: calc(100vh - 123px);">
+                <div class="page-content" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: 20px; overflow-x: hidden;">
+                    <div class="tabs">
+                        <!-- Inventory Tab -->
+                        <div id="tab-inventory" class="tab tab-active">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="inventory" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: block; z-index: 9998;">
+                        <div style="height: 75px;"></div>
+                        <!-- Scanner Section -->
+                        <div class="card" style="color: #44130e;">
+                            <div class="card-content card-content-padding">
+                                <div id="scan-preview-container" style="color: #44130e;" class="scan-preview-box">
+                                    <div id="scan-placeholder">
+                                        <i class="f7-icons" style="font-size: 48px; color: #9ca3af;">camera</i>
+                                        <p style="color: #9ca3af; font-weight: bold; margin-top: 8px;">No image selected</p>
                                     </div>
+                                    <img id="scan-preview" class="scan-preview-img" style="display: none;">
                                 </div>
+                                <div style="color: #44130e; text-align: center; margin-top: 20px;">
+                                    <label style="cursor: pointer; display: inline-block;">
+                                        <img src="img/scanimage.jpg" style="vertical-align: middle; height: 50px;" alt="Camera Capture">
+                                        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+                                    </label>
+                                    <label class="button[disabled]" style="cursor: pointer; display: inline-block;">
+                                        <img src="img/photogallery.jpg" style="vertical-align: middle; height: 50px;" alt="Gallery">
+                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                    </label>
+                                    <button onclick="console.debug('[DEBUG] Analyze button clicked'); window.processImageForInventory();" style="cursor: pointer; display: inline-block; background: #44130e; border: none;">
+                                         <img src="img/analyze.jpg" style="vertical-align: middle; height: 50px;" alt="Scan Image"> 
+                                     </button>
+                                </div>
+                                <div id="scan-status" class="text-align-center" style="display: none; margin-top: 16px;">
+                                    <div class="preloader"><span class="preloader-inner">
+    <svg viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="16"></circle>
+    </svg>
+  </span></div>
+                                    <p id="scan-status-text" style="margin-top: 8px; color: #6366f1;">Analyzing...</p>
+                                </div>
+                                <div id="scan-error" class="block-footer" style="display: none; color: #ef4444; margin-top: 12px;"></div>
                             </div>
-                            <div class="page-content">
-                                <div class="block" style="text-align: center; margin-top: 8px;">
-                                    <button class="button button-fill" onclick="window.scheduleSavedRecipe()" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
-                                    <button class="button button-fill" onclick="window.deductInventory()" style="background: #10b981; color: white; font-size: 16px; font-weight: bold;">Mark as Made</button>
-                                </div>
-                                <div class="block">
-                                    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.5;">${escapedContent}</pre>
+                        </div>
+                        
+                        <!-- Detection Results -->
+                        <div id="detection-result" style="display: none;">
+                            <div class="block-title">Detected Items</div>
+                            <div class="list">
+                                <ul id="detected-items-list"></ul>
+                            </div>
+                            <div class="block">
+                                <button class="button button-fill button-large" onclick="saveDetectedInventory()">
+                                    <img src="img/addtolist.jpg" alt="Add Detected Items">
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual Add -->
+                        <div class="block-title" style="margin-top: 32px; font-size: 20px; font-weight: bold; text-align: center;">Add Item Manually</div>
+                        <div class="block" style="padding: 0 16px;">
+                            <div style="display: flex; gap: 8px; width: 100%;">
+                                <input type="text" id="manual-item-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Item name">
+                                <input type="date" id="manual-expiry-input" style="font-weight: bold; width: 50%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Expiration Date">
+                            </div>
+                        </div>
+                        <div class="block" style="text-align: center;">
+                            <button class="button button-fill" onclick="window.addManualItem()">
+                                <img src="img/addtopantry.jpg" style="height: 50px;" alt="Add Item">
+                            </button>
+                        </div>
+                        
+                        <!-- Inventory List -->
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; margin-top: 32px; text-align: center;">
+                            Your Inventory <span id="item-count" style="color: #6b7280;">(0 items)</span>
+                        </div>
+                        <div id="inventory-placeholder" class="block text-align-center" style="color: rgb(156, 163, 175); display: block;">
+                            <i class="f7-icons" style="font-size: 64px; color: #d1d5db;">cube_box</i>
+                            <p>No items in inventory</p>
+                        </div>
+                        <div class="list media-list" id="inventory-list-container" style="margin: 0;">
+                            <ul id="inventory-list" style="margin: 0; padding: 0;"></ul>
+                        </div>
+                        
+                        <!-- Delete Controls -->
+                        <div id="delete-controls" class="block" style="border:none; display: none; text-align: center;">
+                            <button onclick="window.deleteSelectedItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
+                                <img src="img/delete.jpg" style="height: 60px;" alt="Delete">
+                            </button>
+                            <button class="button" onclick="window.removeAllItems()" style="display: inline-block; background: #44130e; border: 0px solid transparent; vertical-align: middle;">
+                                <img src="img/removeall.jpg" style="height: 60px;" alt="Clear All">
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recipes Tab -->
+                    <div id="tab-recipes" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="recipes" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center;">Recipe Search</div>
+                        <div class="card" style="border: 2px solid #44130e; margin: 8px;">
+                            <div class="card-content card-content-padding">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" id="recipe-search-input" placeholder="Search for recipes..." style="flex: 1; font-size: 16px; font-weight: bold; padding: 12px; border: 1px solid #ccc; border-radius: 4px;">
+                                    <button class="button button-fill" onclick="window.searchRecipes()" style="height: 50px; flex-shrink: 0;">
+                                         <img src="img/searchforrecipe.jpg" alt="Search" style="height: 40px;">
+                                    </button>
                                 </div>
                             </div>
                         </div>
+
+
+                        <!-- Recipe Generation Options (collapsible/optional) -->
+                        <div class="card" style="border: 2px solid #44130e; margin: 8px;">
+                            <div class="card-content card-content-padding">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                                    <div>
+                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Cook Time</label>
+                                        <input type="number" id="max-cook-time" value="60" min="10" max="240" style="width: calc(100% - 30px); font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Max Ingredients</label>
+                                        <input type="number" id="max-ingredients" value="10" min="3" max="20" style="width: calc(100% - 30px); font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 4px;">Dietary Restrictions</label>
+                                        <input type="text" id="dietary-restrictions" placeholder="e.g., vegetarian" style="width: 100%; font-size: 16px; font-weight: bold; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold;">
+                                        <input type="checkbox" id="allow-missing-ingredients">
+                                        <span>Allow missing ingredients</span>
+                                    </label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 50px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 40px;"></button>
+                                        <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 50px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 40px;"></button>
+                                    </div>
+                                </div>
+                                <div id="recipe-generation-status" style="display: none; margin-top: 16px; text-align: center;">
+                                    <div class="preloader"><span class="preloader-inner">
+    <svg viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="16"></circle>
+    </svg>
+  </span></div>
+                                    <p style="margin-top: 8px; color: #6366f1;">Consulting the Smart Chef...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generate Recipes Button (centered, always visible, now below options) -->
+                        <!-- Generate Recipes Title (styled like Recipe Search, above max cook time) -->
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 16px; margin-bottom: 8px; color: #6b7280;">Generate Recipes</div>
+                        <!-- Max Cook Time Option and other options go here -->
+                        <!-- ...existing code for max cook time and options... -->
+                        <div style="display: flex; gap: 8px; justify-content: center; align-items: center; margin-bottom: 8px;">
+                            <button class="button button-active" data-unit="metric" onclick="window.toggleUnits('metric')" style="height: 50px; border: 0px solid transparent;"><img src="img/metric.jpg" alt="Metric" style="height: 40px;"></button>
+                            <button class="button" data-unit="standard" onclick="window.toggleUnits('standard')" style="height: 50px; border: 0px solid transparent;"><img src="img/standard.jpg" alt="Standard" style="height: 40px;"></button>
+                        </div>
+                        <!-- Generate Recipes Button (centered, always visible, now below options) -->
+                        <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin: 8px 0 8px 0;">
+                            <button id="generate-recipe-btn" class="button button-fill button-large" onclick="window.generateRecipes()" style="height: 60px; min-width: 220px; max-width: 90vw; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; background: #6366f1; color: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                   <img src="img/generaterecipe.jpg" alt="Generate 3 Recipes" style="height: 50px; margin-right: 12px;">Generate Recipes
+                               </button>
+                        </div>
+
+                        <!-- Recipe Results -->
+                        <div id="recipe-list-view" class="list media-list" style="margin-top: 16px;"></div>
+                        <div id="recipe-detail-view" style="display: none;"></div>
+
+                        <!-- Saved Recipes -->
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center; margin-top: 16px;">Saved Recipes</div>
+                        <div id="saved-recipes-list" class="list media-list"><ul></ul></div>
                     </div>
-                `,
-                on: {
-                    closed: function() {
-                        this.destroy();
-                        if (window.currentRecipePopup === this) {
-                            window.currentRecipePopup = null;
-                        }
-                    }
-                }
-            });
-            
-            // Close previous popup if open
-            if (window.currentRecipePopup) {
-                window.currentRecipePopup.close();
-            }
-            
-            window.currentRecipePopup = popup;
-            popup.open();
-        };
+                    
+                    <!-- Schedule Tab -->
+                    <div id="tab-schedule" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="schedule" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold; text-align: center;">Meal Schedule</div>
+                        <div style="text-align: center; margin: 8px 16px;">
+                            <button class="button" onclick="window.addMissingIngredientsToShopping()" style="background: #f3f4f6; color: #2563eb; font-size: 18px; font-weight: bold; padding: 14px 28px; border-radius: 8px; border: 2px solid #2563eb; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin: 0 auto; display: inline-block;">
+                                Add Missing Ingredients to Shopping List
+                            </button>
+                        </div>
+                        <div id="calendar-container" style="padding: 16px; max-width: 600px; margin: 0 auto;"></div>
+                    </div>
+                    
+                    <!-- Shopping Tab -->
+                    <div id="tab-shopping" class="tab">
+                        <img src="img/banner.jpg" alt="Banner" class="tab-banner" data-tab="shopping" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; height: 75px; object-fit: fill; display: none; z-index: 9998;">
+                        <div style="height: 75px;"></div>
+                        <div class="block-title" style="font-size: 24px; font-weight: bold;">Shopping List</div>
+                        <div style="display: flex; gap: 8px; align-items: center; padding: 8px;">
+                            <input type="text" id="shopping-item-input" placeholder="Add item..." onkeypress="if(event.key === 'Enter') window.addShoppingItem()" style="flex: 1; font-size: 18px; font-weight: bold; padding: 12px; border: 1px solid #ccc; border-radius: 4px;">
+                            <button class="button button-fill" onclick="if(window.addShoppingItem) window.addShoppingItem(); else console.error('addShoppingItem not ready');" style="height: 50px; flex-shrink: 0;">
+                                <img src="img/addtolist.jpg" alt="Add Item" style="height: 40px;">
+                            </button>
+                        </div>
+                        <div id="shopping-list" class="list" style="padding-left: 0;"><ul style="padding-left: 0;"></ul></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
         
-        window.scheduleSavedRecipe = function() {
-            if (!window.currentSavedRecipe) return;
-            
-            const today = new Date();
-            const dates = [];
-            
-            // Generate next 7 days
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                const dayName = dayNames[date.getDay()];
-                dates.push({ date: dateStr, label: `${dayName} (${dateStr})` });
-            }
-            
-            // Create action sheet with date options using proper Framework7 structure
-            const buttons = [
-                [{
-                    text: 'Select a day to schedule this recipe:',
-                    label: true,
-                    color: 'purple',
-                    bold: true
-                }],
-                dates.map(d => ({
-                    text: d.label,
-                    color: 'green',
-                    onClick: async () => {
-                        const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-                        const scheduleDocRef = window.doc(window.db, scheduleCollectionPath, 'schedule');
-                        
-                        try {
-                            const docSnap = await window.getDoc(scheduleDocRef);
-                            let currentSchedule = {};
+        <!-- Popups and Sheets will be added here -->
+    </div>
+
+ 
                             if (docSnap.exists()) {
                                 currentSchedule = docSnap.data().schedule || {};
                             }
@@ -1076,33 +1134,101 @@
                 const date = new Date(today);
                 date.setDate(today.getDate() + i);
                 const dateStr = date.toISOString().split('T')[0];
-                
                 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 const dayName = dayNames[date.getDay()];
-                
                 const scheduled = window.mealSchedule[dateStr];
                 const recipeTitle = scheduled ? scheduled.recipeTitle : 'No meal planned';
                 const hasScheduled = scheduled && scheduled.recipeTitle;
-                
                 const dayBox = document.createElement('div');
                 dayBox.style.cssText = 'margin-bottom: 12px;';
-                dayBox.innerHTML = `
-                    <div style="position: relative;">
-                        <img src="img/schedulebox.jpg" alt="${dayName}" style="width: 100%; height: 150px; display: block; border-radius: 8px; object-fit: cover; cursor: pointer;" onclick="${hasScheduled ? `window.viewScheduledRecipe('${dateStr}')` : `window.showScheduleModal('${dateStr}', '${dayName}')`}">
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 16px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); pointer-events: none;">
-                            <div style="font-size: 20px; font-weight: bold;">${dayName}</div>
-                            <div style="font-size: 16px; margin-top: 4px;">${dateStr}</div>
-                            <div style="font-size: 14px; margin-top: 8px; font-style: italic;">${recipeTitle}</div>
-                        </div>
-                        ${hasScheduled ? `
-                            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 8px;">
-                                <button class="button button-small button-fill" onclick="event.stopPropagation(); window.removeScheduledMeal('${dateStr}')" style="background: #ef4444; color: white; font-size: 14px; font-weight: bold;">Remove</button>
-                                <button class="button button-small button-fill" onclick="event.stopPropagation(); window.markScheduledMealAsMade('${dateStr}')" style="background: #10b981; color: white; font-size: 14px; font-weight: bold;">Mark as Made</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-                
+                // Main container
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                // Banner image
+                const img = document.createElement('img');
+                img.src = 'img/schedulebox.jpg';
+                img.alt = dayName;
+                img.style.width = '100%';
+                img.style.height = '150px';
+                img.style.display = 'block';
+                img.style.borderRadius = '8px';
+                img.style.objectFit = 'cover';
+                img.style.cursor = 'pointer';
+                if (hasScheduled) {
+                    img.addEventListener('click', () => window.viewScheduledRecipe(dateStr));
+                } else {
+                    img.addEventListener('click', () => window.showScheduleModal(dateStr, dayName));
+                }
+                wrapper.appendChild(img);
+                // Overlay
+                const overlay = document.createElement('div');
+                overlay.style.position = 'absolute';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.right = '0';
+                overlay.style.bottom = '0';
+                overlay.style.padding = '16px';
+                overlay.style.color = 'white';
+                overlay.style.textShadow = '2px 2px 4px rgba(0,0,0,0.7)';
+                overlay.style.pointerEvents = 'none';
+                // Day name
+                const dayDiv = document.createElement('div');
+                dayDiv.style.fontSize = '20px';
+                dayDiv.style.fontWeight = 'bold';
+                dayDiv.textContent = dayName;
+                overlay.appendChild(dayDiv);
+                // Date
+                const dateDiv = document.createElement('div');
+                dateDiv.style.fontSize = '16px';
+                dateDiv.style.marginTop = '4px';
+                dateDiv.textContent = dateStr;
+                overlay.appendChild(dateDiv);
+                // Recipe title
+                const recipeDiv = document.createElement('div');
+                recipeDiv.style.fontSize = '14px';
+                recipeDiv.style.marginTop = '8px';
+                recipeDiv.style.fontStyle = 'italic';
+                recipeDiv.textContent = recipeTitle;
+                overlay.appendChild(recipeDiv);
+                wrapper.appendChild(overlay);
+                // Action buttons if scheduled
+                if (hasScheduled) {
+                    const btnRow = document.createElement('div');
+                    btnRow.style.display = 'flex';
+                    btnRow.style.gap = '8px';
+                    btnRow.style.justifyContent = 'center';
+                    btnRow.style.marginTop = '8px';
+                    btnRow.style.position = 'relative';
+                    btnRow.style.pointerEvents = 'auto';
+                    // Remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'button button-small button-fill';
+                    removeBtn.style.background = '#ef4444';
+                    removeBtn.style.color = 'white';
+                    removeBtn.style.fontSize = '14px';
+                    removeBtn.style.fontWeight = 'bold';
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.removeScheduledMeal(dateStr);
+                    });
+                    btnRow.appendChild(removeBtn);
+                    // Mark as Made button
+                    const madeBtn = document.createElement('button');
+                    madeBtn.className = 'button button-small button-fill';
+                    madeBtn.style.background = '#10b981';
+                    madeBtn.style.color = 'white';
+                    madeBtn.style.fontSize = '14px';
+                    madeBtn.style.fontWeight = 'bold';
+                    madeBtn.textContent = 'Mark as Made';
+                    madeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        window.markScheduledMealAsMade(dateStr);
+                    });
+                    btnRow.appendChild(madeBtn);
+                    wrapper.appendChild(btnRow);
+                }
+                dayBox.appendChild(wrapper);
                 container.appendChild(dayBox);
             }
         };
@@ -1784,10 +1910,10 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
                                 </div>
                             </div>
                             <div class="page-content">
-                                <div class="block" style="text-align: center; margin-top: 8px;">
-                                    <button class="button button-fill" onclick="window.saveCurrentRecipe()" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Save Recipe</button>
-                                    <button class="button button-fill" onclick="window.scheduleGeneratedRecipe(${index})" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
-                                    <button class="button button-fill" onclick="window.deductInventory()" style="background: #10b981; color: white; font-size: 16px; font-weight: bold;">Mark as Made</button>
+                                <div class="block" id="generated-recipe-actions" style="text-align: center; margin-top: 8px;">
+                                    <button id="save-current-recipe-btn" class="button button-fill" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Save Recipe</button>
+                                    <button id="schedule-generated-recipe-btn" class="button button-fill" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
+                                    <button id="deduct-inventory-btn" class="button button-fill" style="background: #10b981; color: white; font-size: 16px; font-weight: bold;">Mark as Made</button>
                                 </div>
                                 <div class="block">
                                     <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.5;">${content}</pre>
@@ -1797,6 +1923,11 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
                     </div>
                 `,
                 on: {
+                    opened: function() {
+                        document.getElementById('save-current-recipe-btn').onclick = window.saveCurrentRecipe;
+                        document.getElementById('schedule-generated-recipe-btn').onclick = function() { window.scheduleGeneratedRecipe(index); };
+                        document.getElementById('deduct-inventory-btn').onclick = window.deductInventory;
+                    },
                     closed: function() {
                         this.destroy();
                         if (window.currentRecipePopup === this) {
@@ -1986,6 +2117,9 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
             const listEl = document.getElementById('recipe-list-view');
             statusEl.style.display = 'block';
             listEl.innerHTML = '';
+            // Modal loading state
+            const modalContent = document.getElementById('recipe-modal-content');
+            if (modalContent) modalContent.innerHTML = '<div style="text-align:center;margin:2em;">Loading...</div>';
             
             const unitPreference = window.units === 'metric' ?
                 'Use Metric measurements (grams, milliliters, Celsius)' :
@@ -2028,10 +2162,16 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
                     } catch (e) {
                         throw new Error("Invalid JSON structure.");
                     }
-                    
-                    // Display the recipe
+                    // Display the recipe in the modal
                     const recipe = parsedJson;
                     const content = `
+<br><br><br>
+<div class="block" id="searched-recipe-actions" style="text-align: center; margin-top: 8px;">
+    <button id="save-searched-recipe-btn" class="button button-fill" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Save Recipe</button>
+    <button id="schedule-searched-recipe-btn" class="button button-fill" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
+</div>
+<div class="block">
+    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">
 Recipe Name: ${recipe.recipeName}
 ${recipe.cookTime ? '\nCook Time: ' + recipe.cookTime : ''}
 ${recipe.servings ? 'Servings: ' + recipe.servings : ''}
@@ -2041,56 +2181,24 @@ ${recipe.ingredientsSummary}
 
 --- INSTRUCTIONS ---
 ${recipe.instructions}
+    </pre>
+</div>
 `;
-                    
                     // Store for schedule/save functions
                     window.currentSearchedRecipe = {
                         title: recipe.recipeName,
                         content: content
                     };
-                    
-                    const popup = app.popup.create({
-                        content: `
-                            <div class="popup">
-                                <div class="page">
-                                    <div class="navbar">
-                                        <div class="navbar-bg"></div>
-                                        <div class="navbar-inner">
-                                            <div class="title">${recipe.recipeName}</div>
-                                            <div class="right">
-                                                <a href="#" class="link popup-close">Close</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="page-content">
-                                        <div class="block" style="text-align: center; margin-top: 8px;">
-                                            <button class="button button-fill" onclick="window.saveSearchedRecipe()" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Save Recipe</button>
-                                            <button class="button button-fill" onclick="window.scheduleSearchedRecipe()" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
-                                        </div>
-                                        <div class="block">
-                                            <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${content}</pre>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `,
-                        on: {
-                            closed: function() {
-                                this.destroy();
-                                if (window.currentRecipePopup === this) {
-                                    window.currentRecipePopup = null;
-                                }
-                            }
-                        }
-                    });
-                    // Close previous popup if open
-                    if (window.currentRecipePopup) {
-                        window.currentRecipePopup.close();
-                    }
-                    window.currentRecipePopup = popup;
-                    popup.open();
-                    // Store for potential saving
-                    window.currentSearchedRecipe = { title: recipe.recipeName, content: content };
+                    // Set modal title and content
+                    document.getElementById('recipe-modal-title').textContent = recipe.recipeName;
+                    document.getElementById('recipe-modal-content').innerHTML = content;
+                    window.openRecipeModal();
+                    setTimeout(() => {
+                        const saveBtn = document.getElementById('save-searched-recipe-btn');
+                        if (saveBtn) saveBtn.onclick = window.saveSearchedRecipe;
+                        const scheduleBtn = document.getElementById('schedule-searched-recipe-btn');
+                        if (scheduleBtn) scheduleBtn.onclick = window.scheduleSearchedRecipe;
+                    }, 0);
                 } else {
                     throw new Error("Empty response from AI.");
                 }
@@ -2101,77 +2209,114 @@ ${recipe.instructions}
             statusEl.style.display = 'none';
         };
         
-        window.saveSearchedRecipe = async function() {
-            if (!window.currentSearchedRecipe) return;
-            await window.saveGeneratedRecipeToDb(window.currentSearchedRecipe.title, window.currentSearchedRecipe.content);
-            app.toast.create({
-                text: 'Recipe saved!',
-                closeTimeout: 2000,
-            }).open();
-        };
-        
-        window.scheduleSearchedRecipe = function() {
-            if (!window.currentSearchedRecipe) return;
-            
-            const today = new Date();
-            const dates = [];
-            
-            // Generate next 7 days
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                const dayName = dayNames[date.getDay()];
-                dates.push({ date: dateStr, label: `${dayName} (${dateStr})` });
-            }
-            
-            // Create action sheet with date options
-            const buttons = dates.map(d => ({
-                text: d.label,
-                onClick: async () => {
-                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
-                    const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
-                    
-                    try {
-                        const docSnap = await getDoc(scheduleDocRef);
-                        let currentSchedule = {};
-                        if (docSnap.exists()) {
-                            currentSchedule = docSnap.data().schedule || {};
-                        }
-                        
-                        currentSchedule[d.date] = {
-                            recipeTitle: window.currentSearchedRecipe.title,
-                            recipeContent: window.currentSearchedRecipe.content,
-                            date: d.date
-                        };
-                        
-                        await setDoc(scheduleDocRef, { schedule: currentSchedule });
-                        
-                        app.toast.create({
-                            text: `Scheduled for ${d.label}!`,
-                            closeTimeout: 2000,
-                        }).open();
-                    } catch (e) {
-                        console.error('Error scheduling meal:', e);
-                        app.dialog.alert('Failed to schedule meal', 'Error');
-                    }
-                }
-            }));
-            
-            buttons.push({
-                text: 'Cancel',
-                color: 'red'
-            });
-            
-            app.actions.create({
-                buttons: buttons
-            }).open();
+        window.viewSavedRecipe = function(recipe) {
+            window.currentSavedRecipe = {
+                title: recipe.title,
+                content: recipe.content
+            };
+            document.getElementById('recipe-modal-title').textContent = recipe.title;
+            document.getElementById('recipe-modal-content').innerHTML = `
+<br><br><br>
+<div class="block" id="saved-recipe-actions" style="text-align: center; margin-top: 8px;">
+    <button id="schedule-saved-recipe-btn" class="button button-fill" style="background: #6366f1; color: white; font-size: 16px; font-weight: bold; margin-bottom: 8px;">Add to Schedule</button>
+    <button id="deduct-inventory-btn" class="button button-fill" style="background: #10b981; color: white; font-size: 16px; font-weight: bold;">Mark as Made</button>
+</div>
+<div class="block">
+    <pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.5;">${recipe.content}</pre>
+</div>
+`;
+            window.openRecipeModal();
+            setTimeout(() => {
+                const scheduleBtn = document.getElementById('schedule-saved-recipe-btn');
+                if (scheduleBtn) scheduleBtn.onclick = function() {
+                    // Switch to schedule tab
+                    document.querySelector('a[href="#tab-schedule"]').click();
+                    // Show date picker dialog
+                    window.app.dialog.create({
+                        title: 'Pick a date to schedule this recipe:',
+                        content: `<div style="text-align:center;margin:1em 0;">
+                            <input type="date" id="schedule-date-input" style="font-size:18px;padding:8px;">
+                        </div>`,
+                        buttons: [
+                            {
+                                text: 'Cancel',
+                                close: true
+                            },
+                            {
+                                text: 'Schedule',
+                                close: false,
+                                onClick: async function(dialog, e) {
+                                    const dateInput = document.getElementById('schedule-date-input');
+                                    const dateStr = dateInput ? dateInput.value : '';
+                                    if (!dateStr) {
+                                        window.app.dialog.alert('Please select a date.');
+                                        return false;
+                                    }
+                                    const scheduleCollectionPath = `artifacts/${appId}/users/${window.currentUserId}/meal_schedule`;
+                                    const scheduleDocRef = doc(window.db, scheduleCollectionPath, 'schedule');
+                                    try {
+                                        const docSnap = await getDoc(scheduleDocRef);
+                                        let currentSchedule = {};
+                                        if (docSnap.exists()) {
+                                            currentSchedule = docSnap.data().schedule || {};
+                                        }
+                                        currentSchedule[dateStr] = {
+                                            recipeTitle: window.currentSavedRecipe.title,
+                                            recipeContent: window.currentSavedRecipe.content,
+                                            date: dateStr
+                                        };
+                                        await setDoc(scheduleDocRef, { schedule: currentSchedule });
+                                        window.app.dialog.close();
+                                        window.app.toast.create({
+                                            text: `Scheduled for ${dateStr}!`,
+                                            closeTimeout: 2000,
+                                        }).open();
+                                    } catch (e) {
+                                        console.error('Error scheduling meal:', e);
+                                        window.app.dialog.alert('Failed to schedule meal.');
+                                    }
+                                }
+                            }
+                        ]
+                    }).open();
+                    window.closeRecipeModal();
+                };
+                const deductBtn = document.getElementById('deduct-inventory-btn');
+                if (deductBtn) deductBtn.onclick = window.deductInventory;
+            }, 0);
         };
 
+
+    // Modal open/close logic for recipe modal
+    window.openRecipeModal = function() {
+        const modal = document.getElementById('recipe-modal');
+        if (modal) {
+            modal.style.display = 'block';
+            // Optionally add fade-in effect
+            setTimeout(() => { modal.classList.add('modal-in'); }, 10);
+        }
+        // Prevent background scroll
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeRecipeModal = function() {
+        const modal = document.getElementById('recipe-modal');
+        if (modal) {
+            modal.classList.remove('modal-in');
+            setTimeout(() => { modal.style.display = 'none'; }, 200); // match fade-out duration if any
+        }
+        // Restore background scroll
+        document.body.style.overflow = '';
+    };
     </script>
 
 
 </div>
 </body>
+<script>
+// Ensure generate recipe button works after DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    const genBtn = document.getElementById('generate-recipe-btn');
+    if (genBtn) genBtn.onclick = window.generateRecipes;
+});
+</script>
 </html>
