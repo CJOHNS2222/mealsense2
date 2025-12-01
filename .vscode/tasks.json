@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start local dev server",
+			"type": "shell",
+			"command": "yarn",
+			"args": [
+				"start"
+			],
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Start Firebase local server",
+			"type": "shell",
+			"command": "firebase",
+			"args": [
+				"serve"
+			],
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}
