@@ -2,6 +2,7 @@ node_modules
 
 # Firebase service account keys
 functions/serviceAccountKey.json
+functions/firebaseKey.json
 
 # Environment files
 *.env
