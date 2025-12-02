@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth, signInAnon } from '../../firebase';
+import { collection, getDocs, setDoc, doc, onSnapshot } from 'firebase/firestore';
 // Helper to get scheduled meals and pantry from localStorage/window (stub for now)
 function getScheduledMeals() {
   // Example: [{ meal: 'Chicken Alfredo', ingredients: ['Chicken', 'Pasta', 'Cream'] }, ...]
@@ -46,15 +48,20 @@ function getPantryItems() {
   }
 
 export default function ShoppingTab() {
-  const [items, setItems] = useState([
-    { text: '400g Smoked Kielbasa or similar cooked sausage', checked: false },
-    { text: '1 medium yellow onion (150g)', checked: false },
-    { text: '150 grams pre-cooked chicken or vegetable ...', checked: false },
-    { text: '1 medium onion (diced)', checked: false },
-    { text: '2 cloves garlic (minced)', checked: false },
-    { text: '1 tablespoon olive oil', checked: false },
-    { text: '120 milliliters water', checked: false },
-  ]);
+  const [items, setItems] = useState([]);
+  // Sync shopping list with Firestore
+  useEffect(() => {
+    async function fetchShoppingList() {
+      await signInAnon();
+      const user = auth.currentUser;
+      if (!user) return;
+      const shopRef = collection(db, 'users', user.uid, 'shoppingList');
+      onSnapshot(shopRef, snap => {
+        setItems(snap.docs.map(d => ({ text: d.data().name, checked: false, ...d.data() })));
+      });
+    }
+    fetchShoppingList();
+  }, []);
 
   const [input, setInput] = useState('');
   const [feedback, setFeedback] = useState('');

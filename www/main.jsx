@@ -4,8 +4,12 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './assets/styles/main.css';
 
+import AuthWrapper from './components/AuthWrapper.jsx';
+
 ReactDOM.createRoot(document.getElementById('app')).render(
   <React.StrictMode>
-    <App />
+    <AuthWrapper>
+      <App />
+    </AuthWrapper>
   </React.StrictMode>
 );

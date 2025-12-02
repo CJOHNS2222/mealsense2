@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, signInAnon, callGemini } from '../../firebase';
-import { collection, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
+import { db, auth, signInAnon } from '../../firebase';
+import ai from '@react-native-firebase/ai';
+import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 
 import PantryTab from '../PantryTab/PantryTab';
-
+export default RecipeTab;
 function RecipeTab() {
   const [search, setSearch] = useState('');
   const [maxCookTime, setMaxCookTime] = useState('60');
@@ -13,6 +14,9 @@ function RecipeTab() {
   const [unit, setUnit] = useState('metric');
   const [savedRecipes, setSavedRecipes] = useState([]);
   const [saveFeedback, setSaveFeedback] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [imagePreview, setImagePreview] = useState(null);
   const [results, setResults] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalRecipe, setModalRecipe] = useState(null);
@@ -30,6 +34,14 @@ function RecipeTab() {
     fetchRecipes();
   }, []);
 
+  // Reset rating and image when opening modal
+  useEffect(() => {
+    if (showModal && modalRecipe) {
+      setRating(modalRecipe.rating || 0);
+      setImagePreview(modalRecipe.imageUrl || null);
+    }
+  }, [showModal, modalRecipe]);
+
   async function handleRemoveRecipe(idx) {
     const recipe = savedRecipes[idx];
     setSavedRecipes(recipes => recipes.filter((_, i) => i !== idx));
@@ -40,41 +52,79 @@ function RecipeTab() {
   }
 
   async function handleGenerateRecipes() {
-    setLoading(true);
-    setResults([]);
-    setSaveFeedback('');
-    await signInAnon();
-    const user = auth.currentUser;
-    // Get pantry items from Firestore
-    let pantryItems = [];
-    if (user) {
-      const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
-      pantryItems = snap.docs.map(d => d.data().name);
+    async function handleGenerateRecipes() {
+      setLoading(true);
+      setResults([]);
+      setSaveFeedback('');
+      await signInAnon();
+      const user = auth.currentUser;
+      // Get pantry items from Firestore
+      let pantryItems = [];
+      if (user) {
+        const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
+        pantryItems = snap.docs.map(d => d.data().name);
+      }
+      try {
+        // Call Gemini via Firebase AI Logic SDK for high-quality, randomized recipes
+        const prompt = `You are a world-class chef. Suggest 3 unique, grade A, creative, and delicious recipes using ONLY these pantry items: ${pantryItems.join(', ')}. Each recipe must be non-trivial (no sandwiches, toast, or basic salads), must be different from each other, and must include a name, description, cook time, servings, full ingredient list, and step-by-step instructions. Randomize the recipes each time. Format the response as a JSON array: [{name, description, cookTime, servings, ingredients, steps, nutrition}].`;
+        const result = await ai().invoke('gemini-pro', {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { text: prompt }
+              ]
+            }
+          ]
+        });
+        // Parse Gemini result (expects JSON array)
+        let recipes = [];
+        try {
+          recipes = JSON.parse(result?.candidates?.[0]?.content?.parts?.[0]?.text || '[]');
+        } catch {
+          // Fallback: treat as plain text, split by lines
+          const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          recipes = text.split('\n').map(line => ({ name: line, description: '', cookTime: '', servings: '', ingredients: [], steps: [], nutrition: '' })).filter(r => r.name);
+        }
+        setResults(recipes);
+      } catch (e) {
+        setSaveFeedback('Error generating recipes.');
+      }
+      setLoading(false);
     }
-    try {
-      // Call Gemini via Firebase Function
-      const payload = {
-        pantry: pantryItems,
-        maxCookTime,
-        maxIngredients,
-        dietary,
-        allowMissing,
-        unit,
-        search,
-      };
-      const result = await callGemini(payload);
-      const recipes = result.data?.recipes || [];
-      setResults(recipes);
-    } catch (e) {
-      setSaveFeedback('Error generating recipes.');
-    }
-    setLoading(false);
-  }
 
+    // Remove used inventory when recipe is marked as made
+    async function handleRecipeMade(recipe) {
+      if (!recipe.ingredients) return;
+      // Fetch pantry
+      await signInAnon();
+      const user = auth.currentUser;
+      if (!user) return;
+      const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
+      let pantry = snap.docs.map(d => d.data());
+      // Deduct ingredients
+      const newPantry = pantry.map(item => {
+        const used = recipe.ingredients.find(i => i.name && i.name.toLowerCase() === item.name.toLowerCase());
+        if (used) {
+          return { ...item, quantity: Math.max(0, (item.quantity || 1) - (used.quantity || 1)) };
+        }
+        return item;
+      }).filter(item => (item.quantity || 0) > 0);
+      // Save updated pantry
+      const invRef = collection(db, 'users', user.uid, 'pantryItems');
+      await Promise.all(newPantry.map(item => setDoc(doc(invRef, item.name), item)));
+    }
+
+    // When scheduling, check for missing ingredients and add to shopping list (stub)
+    async function handleScheduleRecipe(recipe) {
+      // TODO: Implement shopping list sync
+    }
   function openRecipeModal(recipe) {
     setModalRecipe(recipe);
     setShowModal(true);
     setSaveFeedback('');
+    setRating(recipe.rating || 0);
+    setImagePreview(recipe.imageUrl || null);
   }
   async function handleSaveRecipe(recipe) {
     if (savedRecipes.some(r => r.name === recipe.name)) {
@@ -86,6 +136,37 @@ function RecipeTab() {
     const docRef = await addDoc(collection(db, 'users', user.uid, 'recipes'), recipe);
     setSavedRecipes([...savedRecipes, { ...recipe, id: docRef.id }]);
     setSaveFeedback('Recipe saved!');
+  }
+
+  // Handle rating change
+  async function handleRateRecipe(newRating) {
+    if (!modalRecipe || !modalRecipe.id) return;
+    setRating(newRating);
+    const user = auth.currentUser;
+    if (!user) return;
+    await updateDoc(doc(db, 'users', user.uid, 'recipes', modalRecipe.id), { rating: newRating });
+    setSavedRecipes(recipes => recipes.map(r => r.id === modalRecipe.id ? { ...r, rating: newRating } : r));
+    setModalRecipe(r => ({ ...r, rating: newRating }));
+  }
+
+  // Handle image upload
+  async function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file || !modalRecipe || !modalRecipe.id) return;
+    setUploadingImage(true);
+    // Convert to base64 (for demo; in production use Firebase Storage)
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      setImagePreview(base64);
+      const user = auth.currentUser;
+      if (!user) return;
+      await updateDoc(doc(db, 'users', user.uid, 'recipes', modalRecipe.id), { imageUrl: base64 });
+      setSavedRecipes(recipes => recipes.map(r => r.id === modalRecipe.id ? { ...r, imageUrl: base64 } : r));
+      setModalRecipe(r => ({ ...r, imageUrl: base64 }));
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
   }
 
   function closeModal() {
@@ -168,6 +249,35 @@ function RecipeTab() {
             <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 8 }}>{modalRecipe.name}</div>
             <div style={{ fontSize: 15, marginBottom: 8 }}>{modalRecipe.description}</div>
             <div style={{ fontSize: 14, marginBottom: 8 }}><b>Cook time:</b> {modalRecipe.cookTime} min | <b>Servings:</b> {modalRecipe.servings}</div>
+            {/* Recipe image upload and preview */}
+            <div style={{ margin: '10px 0' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Recipe Image:</div>
+              {imagePreview ? (
+                <img src={imagePreview} alt="Recipe" style={{ maxWidth: 180, maxHeight: 120, borderRadius: 8, marginBottom: 6 }} />
+              ) : (
+                <div style={{ color: '#bbb', fontSize: 13, marginBottom: 6 }}>No image uploaded.</div>
+              )}
+              <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} style={{ marginBottom: 6 }} />
+              {uploadingImage && <span style={{ color: '#a9441b', fontSize: 13 }}>Uploading...</span>}
+            </div>
+            {/* Recipe rating */}
+            <div style={{ margin: '10px 0' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Your Rating:</div>
+              <div>
+                {[1,2,3,4,5].map(star => (
+                  <span
+                    key={star}
+                    style={{
+                      fontSize: 24,
+                      color: star <= rating ? '#ffb347' : '#bbb',
+                      cursor: 'pointer',
+                      marginRight: 2,
+                    }}
+                    onClick={() => handleRateRecipe(star)}
+                  >★</span>
+                ))}
+              </div>
+            </div>
             <div style={{ fontWeight: 'bold', marginTop: 10 }}>Ingredients:</div>
             <ul style={{ margin: '6px 0 12px 18px', fontSize: 15 }}>
               {modalRecipe.ingredients.map((ing, idx) => {
@@ -227,8 +337,8 @@ function RecipeTab() {
       </div>
     </div>
   );
-}
 
+// Style constants must be at top level
 const btnStyle = {
   background: 'linear-gradient(90deg, #a9441b 0%, #ffb347 100%)',
   color: '#fff',
@@ -255,5 +365,4 @@ const labelStyle = {
   fontSize: 13,
   marginBottom: 2,
 };
-
-export default RecipeTab;
+  }}

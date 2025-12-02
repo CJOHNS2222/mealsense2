@@ -1,6 +1,51 @@
 
 import React, { useState, useEffect } from 'react';
-import { db, auth, signInAnon, callGemini } from '../../firebase';
+import { db, auth, signInAnon } from '../../firebase';
+import ai from '@react-native-firebase/ai';
+  // Analyze pantry image and update inventory
+  async function handleAnalyzeImage(base64Image) {
+    setAnalyzeMsg('Analyzing image...');
+    try {
+      await signInAnon();
+      const result = await ai().invoke('gemini-pro-vision', {
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: 'Analyze this pantry image. List all food items with quantity and confidence. Return JSON array: [{name, quantity, confidence}]' },
+              { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
+            ]
+          }
+        ]
+      });
+      // Parse result and update inventory
+      let items = [];
+      try {
+        items = JSON.parse(result?.candidates?.[0]?.content?.parts?.[0]?.text || '[]');
+      } catch {
+        setAnalyzeMsg('Could not parse AI result.');
+        return;
+      }
+      setInventory(items);
+      await saveInventory(items);
+      setAnalyzeMsg('Analysis complete! Inventory updated.');
+    } catch (e) {
+      setAnalyzeMsg('Error: ' + (e.message || String(e)));
+    }
+  }
+
+  // Remove used inventory when recipe is marked as made
+  async function handleRecipeMade(usedIngredients) {
+    const newInv = inventory.map(item => {
+      const used = usedIngredients.find(u => u.name.toLowerCase() === item.name.toLowerCase());
+      if (used) {
+        return { ...item, quantity: Math.max(0, (item.quantity || 1) - (used.quantity || 1)) };
+      }
+      return item;
+    }).filter(item => (item.quantity || 0) > 0);
+    setInventory(newInv);
+    await saveInventory(newInv);
+  }
 import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 
 
@@ -123,9 +168,15 @@ function PantryTab() {
       const reader = new FileReader();
       reader.onload = async function(evt) {
         const base64 = evt.target.result.split(',')[1];
-        // Gemini expects modelName and contents
-        const payload = {
-          modelName: 'gemini-pro-vision',
+await signInAnon();
+if (!auth.currentUser) {
+  setAnalyzeMsg('Not signed in. Please try again.');
+  return;
+}
+
+        // Use Firebase AI Logic SDK
+        const result = await aiLogic.run({
+          model: 'gemini-pro-vision',
           contents: [
             {
               role: 'user',
@@ -135,10 +186,9 @@ function PantryTab() {
               ]
             }
           ]
-        };
-        const result = await callGemini(payload);
-        // You may need to parse result.data.result.candidates[0].content.parts[0].text
-        const text = result.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        });
+        // Parse Gemini result
+        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         // Try to extract items from the text (split by comma, line, etc.)
         const detected = text
           .split(/\n|,|;/)

@@ -1,6 +1,7 @@
 // Example usage of Gemini and Firebase in React
 import React, { useState } from 'react';
-import { callGemini, signInAnon } from '../firebase';
+import ai from '@react-native-firebase/ai';
+import { signInAnon } from '../firebase';
 
 export default function GeminiDemo() {
   const [input, setInput] = useState('');
@@ -14,14 +15,50 @@ export default function GeminiDemo() {
     setOutput('');
     try {
       await signInAnon(); // ensure signed in
-      const result = await callGemini({ prompt: input });
-      setOutput(result.data?.response || JSON.stringify(result.data));
+      // Text prompt example
+      const result = await ai().invoke('gemini-pro', {
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: input }
+            ]
+          }
+        ]
+      });
+      setOutput(result?.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(result));
     } catch (e) {
       setError(e.message || String(e));
     } finally {
       setLoading(false);
     }
   }
+
+  // Example: Image analysis (base64 string)
+  // async function handleImageAnalysis(base64Image) {
+  //   setLoading(true);
+  //   setError('');
+  //   setOutput('');
+  //   try {
+  //     await signInAnon();
+  //     const result = await ai().invoke('gemini-pro-vision', {
+  //       contents: [
+  //         {
+  //           role: 'user',
+  //           parts: [
+  //             { text: 'Analyze this image.' },
+  //             { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
+  //           ]
+  //         }
+  //       ]
+  //     });
+  //     setOutput(result?.candidates?.[0]?.content?.parts?.[0]?.text || JSON.stringify(result));
+  //   } catch (e) {
+  //     setError(e.message || String(e));
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   return (
     <div style={{ maxWidth: 500, margin: '2rem auto', padding: 24, background: '#222', color: '#fff', borderRadius: 12 }}>

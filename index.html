@@ -563,12 +563,6 @@ isTokenAutoRefreshEnabled: true
         window.db = getFirestore(firebaseApp);
         window.auth = getAuth(firebaseApp);
         window.functions = getFunctions(firebaseApp);
-        window.callGemini = httpsCallable(window.functions, 'callGemini');
-        // Use the Firebase callable SDK for Gemini Cloud Function calls
-        window.callGeminiWithAuth = async function(payload) {
-            // The callable SDK automatically handles auth and protocol
-            return await window.callGemini(payload);
-        };
 
         onAuthStateChanged(window.auth, (user) => {
 if (user) {

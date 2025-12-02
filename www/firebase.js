@@ -4,9 +4,10 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import ai from '@react-native-firebase/ai';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBRm3LqGTz4THfXOkg9ZvKOZRBhz1WX22Y",
+  apiKey: "AIzaSyB2T_ZT1tVW11I423cjlylrQOkBHYoTDVw",
   authDomain: "gen-lang-client-0381888356.firebaseapp.com",
   projectId: "gen-lang-client-0381888356",
   storageBucket: "gen-lang-client-0381888356.appspot.com",
@@ -17,14 +18,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app, 'us-central1');
 
 // Anonymous sign-in helper
 export function signInAnon() {
   return signInAnonymously(auth);
 }
 
-// Gemini callable function
-export const callGemini = httpsCallable(functions, 'callGemini');
 
-// Example: await callGemini({ prompt: 'Hello Gemini' })
+
+
+
+// Example usage of @react-native-firebase/ai
+// ai().invoke('gemini-pro', { contents: [...] })
+
+

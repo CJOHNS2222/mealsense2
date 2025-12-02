@@ -434,7 +434,7 @@
         window.db = null;
         window.auth = null;
         window.functions = null;
-        window.callGemini = null;
+        // window.callGemini removed (legacy Gemini callable function)
         window.latestImageBase64 = null;
         window.f7 = app;
 
@@ -457,7 +457,7 @@
             window.db = getFirestore(firebaseApp);
             window.auth = getAuth(firebaseApp);
             window.functions = getFunctions(firebaseApp);
-            window.callGemini = httpsCallable(window.functions, 'callGemini');
+            // window.callGemini assignment removed (legacy Gemini callable function)
 
             onAuthStateChanged(window.auth, async (user) => {
                 if (user) {
@@ -989,7 +989,7 @@
             };
 
             try {
-                const result = await window.callGemini(payload);
+                // Gemini callable function usage removed; migrate to AI Logic SDK
                 const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (responseData) {
@@ -1183,7 +1183,7 @@ ${recipe.missingIngredients && recipe.missingIngredients.length > 0 ? '\n--- MIS
             };
 
             try {
-                const result = await window.callGemini(payload);
+                // Gemini callable function usage removed; migrate to AI Logic SDK
                 const responseData = result?.data?.result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (responseData) {

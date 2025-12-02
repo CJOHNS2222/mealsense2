@@ -1,5 +1,7 @@
 
 import React, { useState, useRef } from 'react';
+import { db, auth, signInAnon } from '../../firebase';
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 
 const initialDays = [
   { day: 'Saturday', date: '2025-11-29', meal: '' },
@@ -79,9 +81,48 @@ export default function ScheduleTab() {
     setEditMeal('');
   }
 
-  function handleAddMissingIngredients() {
-    // Stub: In real app, would analyze meals and add missing ingredients to shopping list
-    setFeedback('Missing ingredients added to shopping list!');
+  async function handleAddMissingIngredients() {
+    setFeedback('Checking inventory...');
+    await signInAnon();
+    const user = auth.currentUser;
+    if (!user) {
+      setFeedback('Not signed in.');
+      return;
+    }
+    // 1. Gather all scheduled meals' ingredients
+    let allIngredients = {};
+    days.forEach(day => {
+      if (day.meal && day.meal.ingredients) {
+        day.meal.ingredients.forEach(ing => {
+          const name = ing.name?.toLowerCase();
+          if (!name) return;
+          allIngredients[name] = (allIngredients[name] || 0) + (ing.quantity || 1);
+        });
+      }
+    });
+    // 2. Get pantry
+    const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
+    let pantry = snap.docs.map(d => d.data());
+    let pantryMap = {};
+    pantry.forEach(item => {
+      if (item.name) pantryMap[item.name.toLowerCase()] = item.quantity || 1;
+    });
+    // 3. Compare and find missing
+    let missing = [];
+    Object.entries(allIngredients).forEach(([name, neededQty]) => {
+      const have = pantryMap[name] || 0;
+      if (have < neededQty) {
+        missing.push({ name, quantity: neededQty - have });
+      }
+    });
+    // 4. Add missing to shopping list in Firestore
+    if (missing.length) {
+      const shopRef = collection(db, 'users', user.uid, 'shoppingList');
+      await Promise.all(missing.map(item => setDoc(doc(shopRef, item.name), item)));
+      setFeedback(`Added ${missing.length} missing ingredient${missing.length > 1 ? 's' : ''} to shopping list!`);
+    } else {
+      setFeedback('All ingredients are covered!');
+    }
   }
 
   return (
