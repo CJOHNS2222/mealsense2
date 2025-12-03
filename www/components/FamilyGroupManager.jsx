@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createFamilyGroup, joinFamilyGroup, leaveFamilyGroup, useFamilyGroup } from './FamilyGroup.js';
+import * as api from '../services/api';
 
 export default function FamilyGroupManager() {
   const [group, setGroup] = useState(null);
@@ -18,6 +19,9 @@ export default function FamilyGroupManager() {
     setLoading(true);
     setError('');
     try {
+      // Call backend API
+      await api.createFamilyGroup(groupName);
+      // Also sync with Firebase
       await createFamilyGroup(groupName);
       setGroupName('');
     } catch (err) {
@@ -31,6 +35,9 @@ export default function FamilyGroupManager() {
     setLoading(true);
     setError('');
     try {
+      // Call backend API
+      await api.joinFamilyGroup(joinCode);
+      // Also sync with Firebase
       await joinFamilyGroup(joinCode);
       setJoinCode('');
     } catch (err) {
@@ -43,6 +50,9 @@ export default function FamilyGroupManager() {
     setLoading(true);
     setError('');
     try {
+      // Call backend API
+      if (group?.id) await api.leaveFamilyGroup(group.id);
+      // Also sync with Firebase
       await leaveFamilyGroup();
     } catch (err) {
       setError(err.message);

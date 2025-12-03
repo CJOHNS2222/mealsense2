@@ -1,6 +1,8 @@
 // Example usage of Gemini and Firebase in React
 import React, { useState } from 'react';
-import ai from '@react-native-firebase/ai';
+// React Native AI only works on mobile, not web
+// import ai from '@react-native-firebase/ai';
+import ai from '../services/aiWeb';
 import { signInAnon } from '../firebase';
 
 export default function GeminiDemo() {

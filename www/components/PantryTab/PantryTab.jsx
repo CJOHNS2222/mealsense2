@@ -1,7 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { db, auth, signInAnon } from '../../firebase';
-import ai from '@react-native-firebase/ai';
+// React Native AI only works on mobile, not web
+// import ai from '@react-native-firebase/ai';
+import ai from '../../services/aiWeb';
   // Analyze pantry image and update inventory
   async function handleAnalyzeImage(base64Image) {
     setAnalyzeMsg('Analyzing image...');
@@ -49,7 +50,7 @@ import ai from '@react-native-firebase/ai';
 import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 
 
-function PantryTab() {
+function PantryTab({ analyzeBtnRef, inventoryListRef }) {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [analyzeMsg, setAnalyzeMsg] = useState('');
@@ -174,9 +175,8 @@ if (!auth.currentUser) {
   return;
 }
 
-        // Use Firebase AI Logic SDK
-        const result = await aiLogic.run({
-          model: 'gemini-pro-vision',
+        // Use Gemini API wrapper for web
+        const result = await ai().invoke('gemini-pro-vision', {
           contents: [
             {
               role: 'user',
@@ -263,7 +263,7 @@ if (!auth.currentUser) {
       {/* Analyze Image with Gemini */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
         <input type="file" accept="image/*" id="analyze-image-input" style={{ display: 'none' }} onChange={handleAnalyzeImage} />
-        <button style={{ ...btnStyle, width: 180 }} onClick={() => document.getElementById('analyze-image-input').click()}>Analyze Image</button>
+        <button ref={analyzeBtnRef} style={{ ...btnStyle, width: 180 }} onClick={() => document.getElementById('analyze-image-input').click()}>Analyze Image</button>
       </div>
 
 
@@ -308,90 +308,91 @@ if (!auth.currentUser) {
         <button style={{ ...btnStyle, width: 180 }} onClick={handleAddManual}>ADD TO PANTRY</button>
       </div>
 
-      {/* Inventory list */}
-      <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 8 }}>
-        Your Inventory <span style={{ color: '#bbb', fontWeight: 400 }}>({inventory.length} items)</span>
-      </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 12,
-        marginBottom: 32,
-      }}>
-        {inventory.map((item, i) => (
-          <div key={i} style={{
-            background: '#2a0d08',
-            borderRadius: 10,
-            padding: 10,
-            color: '#fff',
-            minHeight: 90,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="checkbox" checked={item.checked} onChange={() => handleCheck(i)} />
-              <div style={{ width: 36, height: 36, background: '#fff2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                <span role="img" aria-label="img">🖼️</span>
-                <input type="file" accept="image/*" style={{ opacity: 0, position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', cursor: 'pointer' }} onChange={e => handleImageUpload(i, e)} title="Upload image" />
+      <div ref={inventoryListRef}>
+        <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 8 }}>
+          Your Inventory <span style={{ color: '#bbb', fontWeight: 400 }}>({inventory.length} items)</span>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 12,
+          marginBottom: 32,
+        }}>
+          {inventory.map((item, i) => (
+            <div key={i} style={{
+              background: '#2a0d08',
+              borderRadius: 10,
+              padding: 10,
+              color: '#fff',
+              minHeight: 90,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" checked={item.checked} onChange={() => handleCheck(i)} />
+                <div style={{ width: 36, height: 36, background: '#fff2', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <span role="img" aria-label="img">🖼️</span>
+                  <input type="file" accept="image/*" style={{ opacity: 0, position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', cursor: 'pointer' }} onChange={e => handleImageUpload(i, e)} title="Upload image" />
+                </div>
+                {editIdx === i ? (
+                  <>
+                    <input
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      style={{ ...inputStyle, fontSize: 14, minWidth: 80 }}
+                    />
+                  </>
+                ) : (
+                  <div style={{ fontWeight: 500, fontSize: 15, flex: 1 }}>{item.name}</div>
+                )}
+                <button style={{ ...miniBtn, background: '#e74c3c' }} onClick={() => handleRemove(i)}>Remove</button>
               </div>
-              {editIdx === i ? (
-                <>
-                  <input
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    style={{ ...inputStyle, fontSize: 14, minWidth: 80 }}
-                  />
-                </>
-              ) : (
-                <div style={{ fontWeight: 500, fontSize: 15, flex: 1 }}>{item.name}</div>
-              )}
-              <button style={{ ...miniBtn, background: '#e74c3c' }} onClick={() => handleRemove(i)}>Remove</button>
+              <div style={{ fontSize: 13, color: '#bbb' }}>
+                {editIdx === i ? (
+                  <>
+                    <input
+                      value={editExpiry}
+                      onChange={e => setEditExpiry(e.target.value)}
+                      style={{ ...inputStyle, fontSize: 13, minWidth: 80 }}
+                      type="date"
+                    />
+                    <select style={{ ...inputStyle, width: 100, fontSize: 13 }} value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                      <option value="Canned">Canned</option>
+                      <option value="Fresh">Fresh</option>
+                      <option value="Frozen">Frozen</option>
+                      <option value="Dry">Dry</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    {item.expiry ? item.expiry : 'No expiry'}
+                    <span style={{ marginLeft: 8, fontSize: 12, color: '#ffb347' }}>{item.category}</span>
+                  </>
+                )}
+                {item.img && (
+                  <span style={{ color: '#ffb347', marginLeft: 8, fontSize: 12 }}>📷 {item.img}</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={miniBtn} onClick={() => handleQtyChange(i, -1)}>-</button>
+                <span style={{ minWidth: 18, textAlign: 'center' }}>{item.qty}</span>
+                <button style={miniBtn} onClick={() => handleQtyChange(i, 1)}>+</button>
+                {editIdx === i ? (
+                  <>
+                    <button style={miniBtn} onClick={() => handleEditSave(i)}>Save</button>
+                    <button style={miniBtn} onClick={handleEditCancel}>Cancel</button>
+                  </>
+                ) : (
+                  <button style={miniBtn} onClick={() => handleEdit(i)}>Edit</button>
+                )}
+                {/* Date button can open a date picker in future */}
+                <button style={miniBtn} onClick={() => handleEdit(i)}>Date</button>
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: '#bbb' }}>
-              {editIdx === i ? (
-                <>
-                  <input
-                    value={editExpiry}
-                    onChange={e => setEditExpiry(e.target.value)}
-                    style={{ ...inputStyle, fontSize: 13, minWidth: 80 }}
-                    type="date"
-                  />
-                  <select style={{ ...inputStyle, width: 100, fontSize: 13 }} value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-                    <option value="Canned">Canned</option>
-                    <option value="Fresh">Fresh</option>
-                    <option value="Frozen">Frozen</option>
-                    <option value="Dry">Dry</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </>
-              ) : (
-                <>
-                  {item.expiry ? item.expiry : 'No expiry'}
-                  <span style={{ marginLeft: 8, fontSize: 12, color: '#ffb347' }}>{item.category}</span>
-                </>
-              )}
-              {item.img && (
-                <span style={{ color: '#ffb347', marginLeft: 8, fontSize: 12 }}>📷 {item.img}</span>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button style={miniBtn} onClick={() => handleQtyChange(i, -1)}>-</button>
-              <span style={{ minWidth: 18, textAlign: 'center' }}>{item.qty}</span>
-              <button style={miniBtn} onClick={() => handleQtyChange(i, 1)}>+</button>
-              {editIdx === i ? (
-                <>
-                  <button style={miniBtn} onClick={() => handleEditSave(i)}>Save</button>
-                  <button style={miniBtn} onClick={handleEditCancel}>Cancel</button>
-                </>
-              ) : (
-                <button style={miniBtn} onClick={() => handleEdit(i)}>Edit</button>
-              )}
-              {/* Date button can open a date picker in future */}
-              <button style={miniBtn} onClick={() => handleEdit(i)}>Date</button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,76 @@
+.spotlight-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  pointer-events: auto;
+}
+.spotlight-hole {
+  position: absolute;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
+  border-radius: 12px;
+  pointer-events: none;
+  transition: all 0.2s;
+}
+.spotlight-tooltip {
+  position: absolute;
+  min-width: 220px;
+  max-width: 320px;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 18px 20px 12px 20px;
+  z-index: 10000;
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.spotlight-tooltip-top   { transform: translate(-50%, -100%); }
+.spotlight-tooltip-bottom{ transform: translate(-50%, 0); }
+.spotlight-tooltip-left  { transform: translate(-100%, 0); }
+.spotlight-tooltip-right { transform: translate(0, 0); }
+.spotlight-arrow {
+  width: 0; height: 0;
+  border-style: solid;
+  margin-bottom: 8px;
+}
+.spotlight-arrow[data-placement="top"] {
+  border-width: 0 10px 12px 10px;
+  border-color: transparent transparent #fff transparent;
+}
+.spotlight-arrow[data-placement="bottom"] {
+  border-width: 12px 10px 0 10px;
+  border-color: #fff transparent transparent transparent;
+}
+.spotlight-arrow[data-placement="left"] {
+  border-width: 10px 12px 10px 0;
+  border-color: transparent #fff transparent transparent;
+}
+.spotlight-arrow[data-placement="right"] {
+  border-width: 10px 0 10px 12px;
+  border-color: transparent transparent transparent #fff;
+}
+.spotlight-message {
+  margin-bottom: 8px;
+  text-align: center;
+}
+.spotlight-actions {
+  display: flex;
+  gap: 10px;
+}
+.spotlight-actions button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.spotlight-actions button:hover {
+  background: #125ea2;
+}

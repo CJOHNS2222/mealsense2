@@ -5,6 +5,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/family")
+@CrossOrigin(origins = "*") // Allow CORS for React dev server
 public class FamilyGroupController {
     @GetMapping
     public List<String> listGroups() {

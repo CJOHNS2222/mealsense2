@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, signInAnon } from '../../firebase';
-import ai from '@react-native-firebase/ai';
+// ai import removed - use backend API or Gemini API directly for web
+import ai from '../../services/aiWeb';
 import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import * as api from '../../services/api';
 
 import PantryTab from '../PantryTab/PantryTab';
 export default RecipeTab;

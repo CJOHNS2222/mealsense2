@@ -5,6 +5,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/recipes")
+@CrossOrigin(origins = "*") // Allow CORS for React dev server
 public class RecipeController {
     @GetMapping
     public List<String> listRecipes() {
