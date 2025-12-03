@@ -6,7 +6,6 @@ import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase
 import * as api from '../../services/api';
 
 import PantryTab from '../PantryTab/PantryTab';
-export default RecipeTab;
 function RecipeTab() {
   const [search, setSearch] = useState('');
   const [maxCookTime, setMaxCookTime] = useState('60');
@@ -54,46 +53,55 @@ function RecipeTab() {
   }
 
   async function handleGenerateRecipes() {
-    async function handleGenerateRecipes() {
-      setLoading(true);
-      setResults([]);
-      setSaveFeedback('');
-      await signInAnon();
-      const user = auth.currentUser;
-      // Get pantry items from Firestore
-      let pantryItems = [];
-      if (user) {
-        const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
-        pantryItems = snap.docs.map(d => d.data().name);
-      }
-      try {
-        // Call Gemini via Firebase AI Logic SDK for high-quality, randomized recipes
-        const prompt = `You are a world-class chef. Suggest 3 unique, grade A, creative, and delicious recipes using ONLY these pantry items: ${pantryItems.join(', ')}. Each recipe must be non-trivial (no sandwiches, toast, or basic salads), must be different from each other, and must include a name, description, cook time, servings, full ingredient list, and step-by-step instructions. Randomize the recipes each time. Format the response as a JSON array: [{name, description, cookTime, servings, ingredients, steps, nutrition}].`;
-        const result = await ai().invoke('gemini-pro', {
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: prompt }
-              ]
-            }
-          ]
-        });
-        // Parse Gemini result (expects JSON array)
-        let recipes = [];
-        try {
-          recipes = JSON.parse(result?.candidates?.[0]?.content?.parts?.[0]?.text || '[]');
-        } catch {
-          // Fallback: treat as plain text, split by lines
-          const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          recipes = text.split('\n').map(line => ({ name: line, description: '', cookTime: '', servings: '', ingredients: [], steps: [], nutrition: '' })).filter(r => r.name);
-        }
-        setResults(recipes);
-      } catch (e) {
-        setSaveFeedback('Error generating recipes.');
-      }
-      setLoading(false);
+    setLoading(true);
+    setResults([]);
+    setSaveFeedback('');
+    await signInAnon();
+    const user = auth.currentUser;
+    // Get pantry items from Firestore
+    let pantryItems = [];
+    if (user) {
+      const snap = await getDocs(collection(db, 'users', user.uid, 'pantryItems'));
+      pantryItems = snap.docs.map(d => d.data().name);
     }
+    // Always assume basic staples are available
+    const staples = ['salt', 'pepper', 'oil', 'flour', 'sugar', 'butter', 'vinegar', 'baking powder', 'garlic', 'onion', 'water'];
+    const allIngredients = [...new Set([...pantryItems, ...staples])];
+    try {
+      // Build prompt using all input values
+      const prompt = `You are a world-class chef. Suggest 3 unique, grade A, creative, and delicious recipes using ONLY these ingredients: ${allIngredients.join(', ')}. Each recipe must be non-trivial (no sandwiches, toast, or basic salads), must be different from each other, and must include a name, description, cook time, servings, full ingredient list, and step-by-step instructions. 
+      - Each recipe must use no more than ${maxIngredients} ingredients (not counting basic staples).
+      - Each recipe must take no longer than ${maxCookTime} minutes to cook.
+      - All measurements must be in ${unit} units.
+      - ${allowMissing ? 'It is OK to allow up to 2 missing ingredients per recipe, but clearly mark them as missing.' : 'Do not allow missing ingredients.'}
+      - Dietary restrictions: ${dietary || 'none'}.
+      - Do NOT repeat recipes from previous requests; always return a variety and randomize the selection each time.
+      Format the response as a JSON array: [{name, description, cookTime, servings, ingredients, steps, nutrition}].`;
+      const result = await ai().invoke('gemini-pro', {
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: prompt }
+            ]
+          }
+        ]
+      });
+      // Parse Gemini result (expects JSON array)
+      let recipes = [];
+      try {
+        recipes = JSON.parse(result?.candidates?.[0]?.content?.parts?.[0]?.text || '[]');
+      } catch {
+        // Fallback: treat as plain text, split by lines
+        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        recipes = text.split('\n').map(line => ({ name: line, description: '', cookTime: '', servings: '', ingredients: [], steps: [], nutrition: '' })).filter(r => r.name);
+      }
+      setResults(recipes);
+    } catch (e) {
+      setSaveFeedback('Error generating recipes.');
+    }
+    setLoading(false);
+  }
 
     // Remove used inventory when recipe is marked as made
     async function handleRecipeMade(recipe) {
@@ -178,44 +186,90 @@ function RecipeTab() {
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <>
-        <div style={{ height: 32, marginBottom: '1rem' }} />
-        <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 10, textAlign: 'center' }}>
-          Recipe Search
-        </div>
-        {/* Search bar */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, justifyContent: 'center' }}>
-          <input
-            placeholder="Search for recipes..."
-            style={inputStyle}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-      </>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, justifyContent: 'center' }}>
+      <div style={{ height: 32, marginBottom: '1rem' }}></div>
+      <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 10, textAlign: 'center', letterSpacing: 1 }}>Recipe Search</div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, justifyContent: 'center' }}>
         <input
-          type="checkbox"
-          id="allow-missing"
-          checked={allowMissing}
-          onChange={e => setAllowMissing(e.target.checked)}
+          placeholder="Search for recipes..."
+          style={{ ...inputStyle, minWidth: 180 }}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
         />
-        <label htmlFor="allow-missing" style={{ color: '#fff', fontSize: 15 }}>Allow missing ingredients</label>
-        <button style={btnStyle} onClick={() => setUnit('metric')} disabled={unit === 'metric'}>Metric</button>
-        <button style={btnStyle} onClick={() => setUnit('standard')} disabled={unit === 'standard'}>Standard</button>
+        <button style={{ ...btnStyle, padding: '0.5rem 1rem', fontSize: 15 }} onClick={() => {/* TODO: implement search */}}>Search</button>
       </div>
-
-
-
-
-
-      {/* Recipe Results */}
+      <div style={{ height: 18 }}></div>
+      <div style={{ borderTop: '1px solid #bbb', margin: '18px 0 18px 0', opacity: 0.5 }}></div>
+      <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 16, textAlign: 'center', letterSpacing: 1 }}>Generate Recipes</div>
+      <div style={{ background: '#2a1814', borderRadius: 12, padding: '22px 24px', marginBottom: 18, boxShadow: '0 2px 8px #0002', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 24, width: '100%', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <label htmlFor="max-ingredients" style={{ color: '#fff', fontSize: 15, marginBottom: 2 }}>Max Ingredients</label>
+            <input
+              id="max-ingredients"
+              type="number"
+              min="1"
+              value={maxIngredients}
+              onChange={e => setMaxIngredients(e.target.value)}
+              style={{ ...inputStyle, width: 80 }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <label htmlFor="max-cooktime" style={{ color: '#fff', fontSize: 15, marginBottom: 2 }}>Max Cook Time (min)</label>
+            <input
+              id="max-cooktime"
+              type="number"
+              min="1"
+              value={maxCookTime}
+              onChange={e => setMaxCookTime(e.target.value)}
+              style={{ ...inputStyle, width: 100 }}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 24, width: '100%', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, width: 320 }}>
+            <label htmlFor="dietary" style={{ color: '#fff', fontSize: 15, marginBottom: 2 }}>Dietary restrictions</label>
+            <input
+              id="dietary"
+              type="text"
+              placeholder="vegan, vegetarian, allergies, etc."
+              value={dietary}
+              onChange={e => setDietary(e.target.value)}
+              style={{ ...inputStyle, width: '100%' }}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 24, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <span style={{ color: '#fff', fontSize: 15, marginBottom: 2 }}>Measurement Units</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={btnStyle} onClick={() => setUnit('metric')} disabled={unit === 'metric'}>Metric</button>
+              <button style={btnStyle} onClick={() => setUnit('standard')} disabled={unit === 'standard'}>Standard</button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, marginLeft: 24 }}>
+            <label htmlFor="allow-missing" style={{ color: '#fff', fontSize: 15, marginBottom: 2 }}>Allow missing ingredients</label>
+            <input
+              type="checkbox"
+              id="allow-missing"
+              checked={allowMissing}
+              onChange={e => setAllowMissing(e.target.checked)}
+              style={{ marginTop: 2 }}
+            />
+          </div>
+        </div>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+          <button style={{ ...btnStyle, width: 180, fontSize: 17 }} onClick={handleGenerateRecipes} disabled={loading}>
+            {loading ? 'Generating...' : 'Generate 3 Recipes'}
+          </button>
+        </div>
+      </div>
+      {/* Generated Recipe Results */}
       {results.length > 0 && (
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>Recipe Results</div>
+          <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8, textAlign: 'center' }}>Generated Recipes</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {results.map((r, i) => (
-              <div key={i} style={{ background: '#2a0d08', color: '#fff', borderRadius: 8, padding: '0.7rem 1rem', cursor: 'pointer', boxShadow: '0 2px 6px #0003' }} onClick={() => openRecipeModal(r)}>
+              <div key={i} style={{ background: '#2a0d08', color: '#fff', borderRadius: 8, padding: '0.7rem 1rem', cursor: 'pointer', boxShadow: '0 2px 6px #0003', transition: 'box-shadow 0.2s' }} onClick={() => openRecipeModal(r)}>
                 <div style={{ fontWeight: 'bold', fontSize: 16 }}>{r.name}</div>
                 <div style={{ fontSize: 13, color: '#bbb' }}>{r.description}</div>
                 <div style={{ fontSize: 12, color: '#ffb347' }}>Cook time: {r.cookTime} min | Servings: {r.servings}</div>
@@ -224,12 +278,57 @@ function RecipeTab() {
           </div>
         </div>
       )}
-
-      {/* Generate Recipes button moved here above Saved Recipes */}
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
-        <button style={{ ...btnStyle, width: 160 }} onClick={handleGenerateRecipes} disabled={loading}>
-          {loading ? 'Generating...' : 'Generate 3 Recipes'}
-        </button>
+      <div style={{ height: 32 }} />
+      <div style={{ borderTop: '1px solid #bbb', margin: '18px 0 18px 0', opacity: 0.5 }} />
+      {/* Top Rated Recipes Section */}
+      {savedRecipes.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Top Rated Recipes</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {savedRecipes
+              .filter(r => r.rating >= 4)
+              .sort((a, b) => b.rating - a.rating)
+              .slice(0, 3)
+              .map((r, i) => (
+                <div key={i} style={{ background: '#1a3a14', color: '#fff', borderRadius: 8, padding: '0.7rem 1rem', boxShadow: '0 2px 8px #0004', border: '2px solid #ffb347', cursor: 'pointer' }} onClick={() => openRecipeModal(r)}>
+                  <div style={{ fontWeight: 'bold', fontSize: 16 }}>{r.name}</div>
+                  <div style={{ fontSize: 13, color: '#bbb' }}>{r.description}</div>
+                  <div style={{ fontSize: 12, color: '#ffb347' }}>Rating: {r.rating} / 5</div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+      <div style={{ height: 32 }} />
+      <div style={{ borderTop: '1px solid #bbb', margin: '18px 0 18px 0', opacity: 0.5 }} />
+      <div style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Saved Recipes</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+        {savedRecipes.length === 0 && (
+          <div style={{ color: '#bbb', textAlign: 'center' }}>No saved recipes.</div>
+        )}
+        {savedRecipes.map((r, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+            <a href={r.url} style={{ color: '#6cf', fontSize: 16, textDecoration: 'underline', flex: 1 }}>
+              {r.name}
+            </a>
+            <button
+              style={{
+                ...btnStyle,
+                background: '#e74c3c',
+                width: 80,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 38,
+                padding: 0,
+                fontSize: 16,
+              }}
+              onClick={() => handleRemoveRecipe(i)}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Recipe Modal */}
@@ -304,41 +403,9 @@ function RecipeTab() {
           </div>
         </div>
       )}
-
-      {/* Saved Recipes */}
-      <div style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 8, textAlign: 'center' }}>
-        Saved Recipes
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-        {savedRecipes.length === 0 && (
-          <div style={{ color: '#bbb', textAlign: 'center' }}>No saved recipes.</div>
-        )}
-        {savedRecipes.map((r, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
-            <a href={r.url} style={{ color: '#6cf', fontSize: 16, textDecoration: 'underline', flex: 1 }}>
-              {r.name}
-            </a>
-            <button
-              style={{
-                ...btnStyle,
-                background: '#e74c3c',
-                width: 80,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: 38,
-                padding: 0,
-                fontSize: 16,
-              }}
-              onClick={() => handleRemoveRecipe(i)}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
     </div>
   );
+}
 
 // Style constants must be at top level
 const btnStyle = {
@@ -367,4 +434,4 @@ const labelStyle = {
   fontSize: 13,
   marginBottom: 2,
 };
-  }}
+export default RecipeTab;
